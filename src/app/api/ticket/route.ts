@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
 
     const buyerName = session.customer_details?.name ?? "";
     const buyerEmail = session.customer_details?.email ?? "";
+    const buyerPhone = session.customer_details?.phone ?? "";
     const tierName = session.metadata?.tierName ?? "";
     const tierId = session.metadata?.tierId ?? "";
 
@@ -66,6 +67,7 @@ export async function GET(req: NextRequest) {
       stripe_session_id: sessionId,
       buyer_email: buyerEmail,
       buyer_name: buyerName,
+      buyer_phone: buyerPhone,
       ticket_tier: tierName,
       tier_id: tierId,
       quantity,
