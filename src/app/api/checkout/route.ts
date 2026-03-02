@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
             name: `${tierName} — ${eventName}`,
             description: `${eventDate} · ${eventLocation}`,
           },
-          unit_amount: price * 100,
+          unit_amount: Math.round(price * 100),
         },
         quantity: 1,
         adjustable_quantity: { enabled: true, minimum: 1, maximum: 10 },
