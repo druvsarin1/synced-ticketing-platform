@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { EVENT } from "@/lib/event";
+import { calculateFee } from "@/lib/fees";
 
 export async function POST(req: NextRequest) {
   const { tierId, tierName, price, eventName, eventDate, eventLocation } =
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   const origin = req.headers.get("origin") || req.nextUrl.origin;
+  const { fee } = calculateFee(price);
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -39,6 +41,16 @@ export async function POST(req: NextRequest) {
         },
         quantity: 1,
         adjustable_quantity: { enabled: true, minimum: 1, maximum: 10 },
+      },
+      {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: "Service Fee",
+          },
+          unit_amount: Math.round(fee * 100),
+        },
+        quantity: 1,
       },
     ],
     mode: "payment",

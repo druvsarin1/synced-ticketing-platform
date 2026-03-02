@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { EVENT } from "@/lib/event";
-import { calculateFee } from "@/lib/fees";
 
 export default function Home() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -177,44 +176,38 @@ export default function Home() {
           ) : (
             /* Ticket revealed with animation */
             <div className="flex flex-col gap-5">
-              {EVENT.tiers.map((tier) => {
-                const { fee, total } = calculateFee(tier.price);
-                return (
-                  <div
-                    key={tier.id}
-                    className="ticket-card rounded-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden"
-                  >
-                    <span className="absolute top-4 right-5 text-3xl opacity-10 text-red-500">
-                      ♠
-                    </span>
+              {EVENT.tiers.map((tier) => (
+                <div
+                  key={tier.id}
+                  className="ticket-card rounded-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden"
+                >
+                  <span className="absolute top-4 right-5 text-3xl opacity-10 text-red-500">
+                    ♠
+                  </span>
 
-                    <h4 className="text-lg sm:text-xl font-bold mb-1 text-white">
-                      {tier.name}
-                    </h4>
-                    <p className="text-zinc-500 text-sm mb-5">
-                      {tier.description}
-                    </p>
-                    <p className="text-4xl sm:text-5xl font-black mb-1 text-white">
-                      ${tier.price}
-                      <span className="text-zinc-700 text-sm font-normal ml-1.5">
-                        / ticket
-                      </span>
-                    </p>
-                    <p className="text-zinc-600 text-xs mb-6">
-                      + ${fee.toFixed(2)} service fee · ${total.toFixed(2)} total
-                    </p>
-                    <button
-                      onClick={() =>
-                        handleCheckout(tier.id, total, tier.name)
-                      }
-                      disabled={loading === tier.id}
-                      className="w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-3.5 px-6 rounded-xl transition-all cursor-pointer text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading === tier.id ? "Redirecting..." : "Buy Now"}
-                    </button>
-                  </div>
-                );
-              })}
+                  <h4 className="text-lg sm:text-xl font-bold mb-1 text-white">
+                    {tier.name}
+                  </h4>
+                  <p className="text-zinc-500 text-sm mb-5">
+                    {tier.description}
+                  </p>
+                  <p className="text-4xl sm:text-5xl font-black mb-6 text-white">
+                    ${tier.price}
+                    <span className="text-zinc-700 text-sm font-normal ml-1.5">
+                      / ticket
+                    </span>
+                  </p>
+                  <button
+                    onClick={() =>
+                      handleCheckout(tier.id, tier.price, tier.name)
+                    }
+                    disabled={loading === tier.id}
+                    className="w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-3.5 px-6 rounded-xl transition-all cursor-pointer text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading === tier.id ? "Redirecting..." : "Buy Now"}
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
