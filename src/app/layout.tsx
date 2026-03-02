@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Synced | Event Tickets",
-  description: "Premium event ticketing by Synced",
+  title: "SHOLAY — The Official Afterparty | Synced",
+  description:
+    "The ultimate late-night celebration of dance, music, and community. April 18, 2026 · Infinite Lounge.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://synced.vip"
+  ),
 };
 
 export default function RootLayout({
