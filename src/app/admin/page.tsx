@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useId } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { useState, useEffect, useCallback, useRef } from "react";
+import jsQR from "jsqr";
 
 interface Ticket {
   id: string;
@@ -58,8 +58,10 @@ export default function AdminDashboard() {
   } | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const scanInputRef = useRef<HTMLInputElement>(null);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scannerContainerId = useId().replace(/:/g, "-");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const animFrameRef = useRef<number>(0);
   const processingRef = useRef(false);
 
   const fetchData = useCallback(async () => {
@@ -94,7 +96,6 @@ export default function AdminDashboard() {
     }
   }, [authed, fetchData, fetchCheckinList]);
 
-  // Auto-focus scan input when on checkin tab
   useEffect(() => {
     if (tab === "checkin" && scanInputRef.current) {
       scanInputRef.current.focus();
@@ -150,41 +151,60 @@ export default function AdminDashboard() {
     setTimeout(() => setScanResult(null), 4000);
   }
 
+  function scanFrame() {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) {
+      animFrameRef.current = requestAnimationFrame(scanFrame);
+      return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+    if (code && !processingRef.current) {
+      processingRef.current = true;
+      handleCheckin(code.data);
+      setTimeout(() => {
+        processingRef.current = false;
+      }, 3000);
+    }
+
+    animFrameRef.current = requestAnimationFrame(scanFrame);
+  }
+
   async function startCamera() {
     try {
-      const scanner = new Html5Qrcode(`qr-reader-${scannerContainerId}`);
-      scannerRef.current = scanner;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      streamRef.current = stream;
 
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        async (decodedText) => {
-          if (processingRef.current) return;
-          processingRef.current = true;
-          await handleCheckin(decodedText);
-          // Pause before allowing next scan
-          setTimeout(() => {
-            processingRef.current = false;
-          }, 3000);
-        },
-        () => {} // ignore errors (no QR found in frame)
-      );
-
-      setCameraActive(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute("playsinline", "true");
+        await videoRef.current.play();
+        setCameraActive(true);
+        animFrameRef.current = requestAnimationFrame(scanFrame);
+      }
     } catch {
       alert("Could not access camera. Make sure you allow camera permissions.");
     }
   }
 
-  async function stopCamera() {
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop();
-        scannerRef.current.clear();
-      } catch {
-        // ignore
-      }
-      scannerRef.current = null;
+  function stopCamera() {
+    cancelAnimationFrame(animFrameRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setCameraActive(false);
   }
@@ -493,11 +513,23 @@ export default function AdminDashboard() {
 
               {/* Camera viewfinder */}
               <div
-                id={`qr-reader-${scannerContainerId}`}
-                className={`mb-4 rounded-xl overflow-hidden ${
+                className={`relative mb-4 rounded-xl overflow-hidden bg-black ${
                   cameraActive ? "block" : "hidden"
                 }`}
-              />
+              >
+                <video
+                  ref={videoRef}
+                  className="w-full rounded-xl"
+                  playsInline
+                  muted
+                />
+                {/* Scan overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-48 h-48 border-2 border-red-500/50 rounded-2xl" />
+                </div>
+              </div>
+              {/* Hidden canvas for QR processing */}
+              <canvas ref={canvasRef} className="hidden" />
 
               {/* Manual input fallback */}
               <div className="flex flex-col gap-3">
