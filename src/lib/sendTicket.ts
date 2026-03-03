@@ -48,7 +48,7 @@ export async function sendTicketEmail({
 
         <div style="text-align: center; background: #111; border: 1px solid #222; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
           <p style="color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 16px 0;">Scan at entry</p>
-          <img src="data:image/png;base64,${qrBase64}" alt="QR Code" style="width: 200px; height: 200px;" />
+          <img src="cid:qrcode" alt="QR Code" style="width: 200px; height: 200px;" />
           <p style="color: #555; font-size: 11px; margin: 16px 0 0 0; font-family: monospace;">${ticketId}</p>
         </div>
 
@@ -62,8 +62,9 @@ export async function sendTicketEmail({
     attachments: [
       {
         filename: "qrcode.png",
-        content: qrBase64,
+        content: Buffer.from(qrBase64, "base64"),
         contentType: "image/png",
+        contentId: "qrcode",
       },
     ],
     headers: {
