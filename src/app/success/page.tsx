@@ -140,15 +140,149 @@ function SuccessContent() {
         <div className="mt-6 flex flex-col gap-3">
           <button
             onClick={() => {
-              // Download QR code as image
-              const link = document.createElement("a");
-              link.href = ticket.qrDataUrl;
-              link.download = `synced-ticket-${ticket.ticketId.slice(0, 8)}.png`;
-              link.click();
+              const canvas = document.createElement("canvas");
+              const w = 800;
+              const h = 1200;
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext("2d")!;
+
+              // Background
+              ctx.fillStyle = "#0a0a0a";
+              ctx.fillRect(0, 0, w, h);
+
+              // Red accent line at top
+              ctx.fillStyle = "#ef4444";
+              ctx.fillRect(0, 0, w, 4);
+
+              // SYNCED header
+              ctx.fillStyle = "#ffffff";
+              ctx.font = "bold 36px -apple-system, sans-serif";
+              ctx.textAlign = "center";
+              ctx.letterSpacing = "4px";
+              ctx.fillText("SYNCED", w / 2, 70);
+
+              // Digital Ticket subtitle
+              ctx.fillStyle = "#ef4444";
+              ctx.font = "bold 13px -apple-system, sans-serif";
+              ctx.fillText("DIGITAL TICKET", w / 2, 95);
+
+              // Dashed line
+              ctx.setLineDash([6, 4]);
+              ctx.strokeStyle = "rgba(255,255,255,0.1)";
+              ctx.beginPath();
+              ctx.moveTo(60, 125);
+              ctx.lineTo(w - 60, 125);
+              ctx.stroke();
+              ctx.setLineDash([]);
+
+              // Event name
+              ctx.fillStyle = "#ffffff";
+              ctx.font = "bold 28px -apple-system, sans-serif";
+              ctx.textAlign = "left";
+              ctx.fillText(ticket.eventName || "", 60, 180);
+
+              // Event details
+              ctx.fillStyle = "#a1a1aa";
+              ctx.font = "16px -apple-system, sans-serif";
+              const diamond = "\u2666";
+              ctx.fillStyle = "#ef4444";
+              ctx.fillText(diamond, 60, 220);
+              ctx.fillStyle = "#a1a1aa";
+              ctx.fillText(ticket.eventDate || "", 82, 220);
+
+              ctx.fillStyle = "#ef4444";
+              ctx.fillText(diamond, 60, 250);
+              ctx.fillStyle = "#a1a1aa";
+              ctx.fillText(ticket.eventLocation || "", 82, 250);
+
+              // Divider
+              ctx.strokeStyle = "rgba(255,255,255,0.05)";
+              ctx.beginPath();
+              ctx.moveTo(60, 280);
+              ctx.lineTo(w - 60, 280);
+              ctx.stroke();
+
+              // Guest / Tier / Qty
+              ctx.fillStyle = "#52525b";
+              ctx.font = "bold 11px -apple-system, sans-serif";
+              ctx.textAlign = "left";
+              ctx.fillText("GUEST", 60, 315);
+              ctx.fillStyle = "#ffffff";
+              ctx.font = "16px -apple-system, sans-serif";
+              ctx.fillText(ticket.buyerName, 60, 340);
+
+              ctx.fillStyle = "#52525b";
+              ctx.font = "bold 11px -apple-system, sans-serif";
+              ctx.textAlign = "center";
+              ctx.fillText("TIER", w / 2, 315);
+              ctx.fillStyle = "#ffffff";
+              ctx.font = "16px -apple-system, sans-serif";
+              ctx.fillText(ticket.tierName, w / 2, 340);
+
+              if (ticket.quantity > 1) {
+                ctx.fillStyle = "#52525b";
+                ctx.font = "bold 11px -apple-system, sans-serif";
+                ctx.textAlign = "right";
+                ctx.fillText("QTY", w - 60, 315);
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "16px -apple-system, sans-serif";
+                ctx.fillText(String(ticket.quantity), w - 60, 340);
+              }
+
+              // QR code
+              const qrImg = new Image();
+              qrImg.onload = () => {
+                const qrSize = 280;
+                const qrX = (w - qrSize) / 2;
+                const qrY = 400;
+
+                // QR background box
+                ctx.fillStyle = "#111";
+                ctx.beginPath();
+                ctx.roundRect(qrX - 30, qrY - 30, qrSize + 60, qrSize + 100, 16);
+                ctx.fill();
+                ctx.strokeStyle = "rgba(255,255,255,0.05)";
+                ctx.stroke();
+
+                // "Scan at entry" label
+                ctx.fillStyle = "#71717a";
+                ctx.font = "bold 11px -apple-system, sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText("SCAN AT ENTRY", w / 2, qrY - 8);
+
+                ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+                // Ticket ID under QR
+                ctx.fillStyle = "#3f3f46";
+                ctx.font = "11px monospace";
+                ctx.fillText(ticket.ticketId, w / 2, qrY + qrSize + 25);
+
+                // 18+ warning bar
+                ctx.fillStyle = "#ef4444";
+                ctx.beginPath();
+                ctx.roundRect(60, 810, w - 120, 50, 12);
+                ctx.fill();
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 14px -apple-system, sans-serif";
+                ctx.fillText("18+ EVENT — VALID ID REQUIRED", w / 2, 841);
+
+                // Footer
+                ctx.fillStyle = "#3f3f46";
+                ctx.font = "12px -apple-system, sans-serif";
+                ctx.fillText("Powered by Synced", w / 2, 910);
+
+                // Download
+                const link = document.createElement("a");
+                link.href = canvas.toDataURL("image/png");
+                link.download = `synced-ticket-${ticket.ticketId.slice(0, 8)}.png`;
+                link.click();
+              };
+              qrImg.src = ticket.qrDataUrl;
             }}
             className="w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-3.5 rounded-xl transition-all cursor-pointer text-sm uppercase tracking-wider"
           >
-            Save QR Code
+            Save Ticket
           </button>
           <p className="text-zinc-600 text-xs text-center">
             A confirmation has been sent to{" "}

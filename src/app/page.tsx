@@ -93,7 +93,7 @@ export default function Home() {
           <div className="inline-flex items-center gap-2 bg-red-600/10 border border-red-500/20 rounded-full px-4 py-1.5 mb-8">
             <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
             <span className="text-red-400 text-[10px] uppercase tracking-[3px] font-bold">
-              {EVENT.tagline}
+              Theme: {EVENT.tagline}
             </span>
           </div>
 
