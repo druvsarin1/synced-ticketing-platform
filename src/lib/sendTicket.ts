@@ -25,7 +25,7 @@ export async function sendTicketEmail({
   eventLocation,
   qrBase64,
 }: SendTicketParams) {
-  await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from: "Synced Tickets <tickets@synced.vip>",
     to: buyerEmail,
     subject: `Your ${ticketTier} Ticket — ${eventName}`,
@@ -48,7 +48,7 @@ export async function sendTicketEmail({
 
         <div style="text-align: center; background: #111; border: 1px solid #222; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
           <p style="color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 16px 0;">Scan at entry</p>
-          <img src="cid:qrcode" alt="QR Code" style="width: 200px; height: 200px;" />
+          <img src="data:image/png;base64,${qrBase64}" alt="QR Code" style="width: 200px; height: 200px;" />
           <p style="color: #555; font-size: 11px; margin: 16px 0 0 0; font-family: monospace;">${ticketId}</p>
         </div>
 
@@ -70,4 +70,11 @@ export async function sendTicketEmail({
       "X-Entity-Ref-ID": ticketId,
     },
   });
+
+  if (error) {
+    console.error("Resend error:", error);
+    throw new Error(`Resend failed: ${JSON.stringify(error)}`);
+  }
+
+  console.log("Ticket email sent:", data);
 }
