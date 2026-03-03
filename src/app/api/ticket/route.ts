@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
+import { sendTicketEmail } from "@/lib/sendTicket";
 import QRCode from "qrcode";
 import { v4 as uuidv4 } from "uuid";
 
@@ -61,6 +62,10 @@ export async function GET(req: NextRequest) {
     const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
     const quantity = lineItems.data[0]?.quantity ?? 1;
 
+    const eventName = session.metadata?.eventName ?? "";
+    const eventDate = session.metadata?.eventDate ?? "";
+    const eventLocation = session.metadata?.eventLocation ?? "";
+
     // Save to Supabase
     await supabase.from("tickets").insert({
       id: ticketId,
@@ -74,15 +79,29 @@ export async function GET(req: NextRequest) {
       checked_in: false,
     });
 
+    // Send ticket email (don't block the response if it fails)
+    const qrBase64 = qrDataUrl.split(",")[1];
+    sendTicketEmail({
+      ticketId,
+      buyerEmail,
+      buyerName,
+      ticketTier: tierName,
+      quantity,
+      eventName,
+      eventDate,
+      eventLocation,
+      qrBase64,
+    }).catch((err) => console.error("Failed to send ticket email:", err));
+
     return NextResponse.json({
       ticketId,
       qrDataUrl,
       buyerName,
       buyerEmail,
       tierName,
-      eventName: session.metadata?.eventName ?? "",
-      eventDate: session.metadata?.eventDate ?? "",
-      eventLocation: session.metadata?.eventLocation ?? "",
+      eventName,
+      eventDate,
+      eventLocation,
       quantity,
     });
   } catch (err) {
