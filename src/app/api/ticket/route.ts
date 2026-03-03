@@ -79,19 +79,24 @@ export async function GET(req: NextRequest) {
       checked_in: false,
     });
 
-    // Send ticket email (don't block the response if it fails)
+    // Send ticket email
     const qrBase64 = qrDataUrl.split(",")[1];
-    sendTicketEmail({
-      ticketId,
-      buyerEmail,
-      buyerName,
-      ticketTier: tierName,
-      quantity,
-      eventName,
-      eventDate,
-      eventLocation,
-      qrBase64,
-    }).catch((err) => console.error("Failed to send ticket email:", err));
+    try {
+      await sendTicketEmail({
+        ticketId,
+        buyerEmail,
+        buyerName,
+        ticketTier: tierName,
+        quantity,
+        eventName,
+        eventDate,
+        eventLocation,
+        qrBase64,
+      });
+      console.log("Ticket email sent to:", buyerEmail);
+    } catch (emailErr) {
+      console.error("Failed to send ticket email:", emailErr);
+    }
 
     return NextResponse.json({
       ticketId,
