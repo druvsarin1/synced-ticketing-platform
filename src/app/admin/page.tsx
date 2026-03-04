@@ -57,6 +57,7 @@ export default function AdminDashboard() {
     type: "success" | "error" | "warning";
   } | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cancelledIds, setCancelledIds] = useState<Set<string>>(new Set());
   const scanInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,9 +71,21 @@ export default function AdminDashboard() {
     });
     if (res.ok) {
       const json = await res.json();
+      // Filter out locally cancelled tickets that server hasn't caught up on
+      if (cancelledIds.size > 0) {
+        json.tickets = json.tickets.filter(
+          (t: Ticket) => !cancelledIds.has(t.id)
+        );
+        json.totalSold = json.tickets.reduce(
+          (sum: number, t: Ticket) => sum + t.quantity, 0
+        );
+        json.totalRevenue = json.tickets.reduce(
+          (sum: number, t: Ticket) => sum + t.amount, 0
+        );
+      }
       setData(json);
     }
-  }, [password]);
+  }, [password, cancelledIds]);
 
   const fetchCheckinList = useCallback(async () => {
     const res = await fetch("/api/admin/checkin-list", {
@@ -80,9 +93,12 @@ export default function AdminDashboard() {
     });
     if (res.ok) {
       const json = await res.json();
-      setCheckinList(json.tickets ?? []);
+      const tickets = (json.tickets ?? []).filter(
+        (t: CheckInEntry) => !cancelledIds.has(t.id)
+      );
+      setCheckinList(tickets);
     }
-  }, [password]);
+  }, [password, cancelledIds]);
 
   useEffect(() => {
     if (authed) {
@@ -140,6 +156,8 @@ export default function AdminDashboard() {
         message: `Cancelled & refunded: ${buyerName}`,
         type: "success",
       });
+      // Track cancelled ID so auto-refresh doesn't bring it back
+      setCancelledIds((prev) => new Set([...prev, id]));
       // Immediately remove from UI
       if (data) {
         setData({
