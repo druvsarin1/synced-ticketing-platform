@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { supabase } from "@/lib/supabase";
 import { EVENT } from "@/lib/event";
 
 export async function GET(req: NextRequest) {
@@ -15,7 +16,20 @@ export async function GET(req: NextRequest) {
     expand: ["data.line_items"],
   });
 
-  const tickets = sessions.data.map((session) => ({
+  // Get active ticket session IDs from Supabase to filter out cancelled ones
+  const { data: activeTickets } = await supabase
+    .from("tickets")
+    .select("stripe_session_id");
+  const activeSessionIds = new Set(
+    (activeTickets ?? []).map((t) => t.stripe_session_id)
+  );
+
+  // Only show sessions that still have a ticket in Supabase
+  const activeSessions = sessions.data.filter((session) =>
+    activeSessionIds.has(session.id)
+  );
+
+  const tickets = activeSessions.map((session) => ({
     id: session.id,
     buyerName: session.customer_details?.name ?? "—",
     buyerEmail: session.customer_details?.email ?? "—",

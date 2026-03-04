@@ -140,6 +140,24 @@ export default function AdminDashboard() {
         message: `Cancelled & refunded: ${buyerName}`,
         type: "success",
       });
+      // Immediately remove from UI
+      if (data) {
+        setData({
+          ...data,
+          tickets: data.tickets.filter((t) => t.id !== id),
+          totalSold: data.totalSold - 1,
+          totalRevenue: data.totalRevenue - (data.tickets.find((t) => t.id === id)?.amount ?? 0),
+          tierSummary: data.tierSummary.map((tier) => {
+            const cancelled = data.tickets.find((t) => t.id === id);
+            if (cancelled && cancelled.tierId === tier.id) {
+              return { ...tier, sold: tier.sold - 1, remaining: tier.remaining + 1, revenue: tier.revenue - cancelled.amount };
+            }
+            return tier;
+          }),
+        });
+      }
+      setCheckinList((prev) => prev.filter((t) => t.id !== id));
+      // Also refresh from server
       fetchData();
       fetchCheckinList();
     } else {
