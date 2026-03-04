@@ -44,8 +44,12 @@ export default function Home() {
           eventLocation: `${EVENT.location}, ${EVENT.address}`,
         }),
       });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
+      const data = await res.json();
+      if (data.error === "Sold out") {
+        alert("This tier is sold out!");
+      } else if (data.url) {
+        window.location.href = data.url;
+      }
     } catch {
       alert("Something went wrong. Please try again.");
     } finally {
