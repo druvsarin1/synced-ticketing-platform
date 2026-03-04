@@ -157,9 +157,11 @@ export default function AdminDashboard() {
         });
       }
       setCheckinList((prev) => prev.filter((t) => t.id !== id));
-      // Also refresh from server
-      fetchData();
-      fetchCheckinList();
+      // Refresh from server after a short delay to let Stripe/Supabase process
+      setTimeout(() => {
+        fetchData();
+        fetchCheckinList();
+      }, 2000);
     } else {
       const body = await res.json();
       setScanResult({
