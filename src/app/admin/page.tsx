@@ -118,6 +118,40 @@ export default function AdminDashboard() {
     setLoading(false);
   }
 
+  async function handleCancel(
+    id: string,
+    buyerName: string,
+    idType: "ticketId" | "stripeSessionId" = "ticketId"
+  ) {
+    if (!confirm(`Cancel ticket and refund ${buyerName}? This cannot be undone.`))
+      return;
+
+    const res = await fetch("/api/admin/cancel", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": password,
+      },
+      body: JSON.stringify({ [idType]: id }),
+    });
+
+    if (res.ok) {
+      setScanResult({
+        message: `Cancelled & refunded: ${buyerName}`,
+        type: "success",
+      });
+      fetchData();
+      fetchCheckinList();
+    } else {
+      const body = await res.json();
+      setScanResult({
+        message: body.error || "Failed to cancel",
+        type: "error",
+      });
+    }
+    setTimeout(() => setScanResult(null), 4000);
+  }
+
   async function handleCheckin(ticketId: string) {
     const res = await fetch("/api/admin/checkin", {
       method: "POST",
@@ -409,6 +443,7 @@ export default function AdminDashboard() {
                       <th className="px-5 py-3">Qty</th>
                       <th className="px-5 py-3">Amount</th>
                       <th className="px-5 py-3">Date</th>
+                      <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -433,12 +468,22 @@ export default function AdminDashboard() {
                         <td className="px-5 py-3 text-zinc-500">
                           {ticket.date}
                         </td>
+                        <td className="px-5 py-3">
+                          <button
+                            onClick={() =>
+                              handleCancel(ticket.id, ticket.buyerName, "stripeSessionId")
+                            }
+                            className="text-xs text-zinc-600 hover:text-red-400 transition-colors cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </td>
                       </tr>
                     ))}
                     {data.tickets.length === 0 && (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={7}
                           className="px-5 py-8 text-center text-zinc-600"
                         >
                           No purchases yet
@@ -467,6 +512,14 @@ export default function AdminDashboard() {
                       </span>
                       <span>{ticket.date}</span>
                     </div>
+                    <button
+                      onClick={() =>
+                        handleCancel(ticket.id, ticket.buyerName, "stripeSessionId")
+                      }
+                      className="mt-2 text-xs text-zinc-600 hover:text-red-400 transition-colors cursor-pointer"
+                    >
+                      Cancel & Refund
+                    </button>
                   </div>
                 ))}
                 {data.tickets.length === 0 && (
@@ -612,7 +665,7 @@ export default function AdminDashboard() {
                         {entry.buyer_email}
                       </p>
                     </div>
-                    <div className="ml-3 shrink-0">
+                    <div className="ml-3 shrink-0 flex items-center gap-2">
                       {entry.checked_in ? (
                         <span className="text-xs font-medium text-green-400 bg-green-500/10 px-3 py-1.5 rounded-full">
                           In
@@ -625,6 +678,14 @@ export default function AdminDashboard() {
                           Check in
                         </button>
                       )}
+                      <button
+                        onClick={() =>
+                          handleCancel(entry.id, entry.buyer_name)
+                        }
+                        className="text-xs text-zinc-600 hover:text-red-400 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   </div>
                 ))}
