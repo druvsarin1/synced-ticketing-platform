@@ -25,19 +25,28 @@ export async function POST(req: NextRequest) {
   const { data: ticket, error: fetchError } = await query.single();
 
   if (fetchError || !ticket) {
-    return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    console.error("Ticket lookup failed:", fetchError);
+    return NextResponse.json(
+      { error: "Ticket not found", details: fetchError?.message },
+      { status: 404 }
+    );
   }
 
+  console.log("Cancelling ticket:", ticket.id, "for", ticket.buyer_name);
+
   // Refund via Stripe using the session's payment intent
+  let refundId: string | null = null;
   try {
     const session = await stripe.checkout.sessions.retrieve(
       ticket.stripe_session_id
     );
 
     if (session.payment_intent) {
-      await stripe.refunds.create({
+      const refund = await stripe.refunds.create({
         payment_intent: session.payment_intent as string,
       });
+      refundId = refund.id;
+      console.log("Stripe refund created:", refund.id, "status:", refund.status);
     }
   } catch (err) {
     console.error("Stripe refund error:", err);
@@ -48,7 +57,20 @@ export async function POST(req: NextRequest) {
   }
 
   // Delete ticket from Supabase
-  await supabase.from("tickets").delete().eq("id", ticketId);
+  const { error: deleteError } = await supabase
+    .from("tickets")
+    .delete()
+    .eq("id", ticket.id);
+
+  if (deleteError) {
+    console.error("Supabase delete failed:", deleteError);
+    return NextResponse.json(
+      { error: "Refund processed but failed to delete ticket", refundId },
+      { status: 500 }
+    );
+  }
+
+  console.log("Ticket deleted from Supabase:", ticket.id);
 
   // Send cancellation email
   if (ticket.buyer_email) {
@@ -79,10 +101,11 @@ export async function POST(req: NextRequest) {
           </div>
         `,
       });
+      console.log("Cancellation email sent to:", ticket.buyer_email);
     } catch (emailErr) {
       console.error("Cancel email failed:", emailErr);
     }
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, refundId, deletedTicketId: ticket.id });
 }
