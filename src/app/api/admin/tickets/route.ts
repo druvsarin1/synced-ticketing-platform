@@ -57,11 +57,18 @@ export async function GET(req: NextRequest) {
 
   const totalRevenue = tickets.reduce((sum, t) => sum + t.amount, 0);
   const totalSold = tickets.reduce((sum, t) => sum + t.quantity, 0);
+  // Net revenue = what you keep (tier price × qty, no Stripe fees)
+  const netRevenue = tierSummary.reduce(
+    (sum, tier) => sum + tier.price * tier.sold, 0
+  );
+  const stripeFees = Math.round((totalRevenue - netRevenue) * 100) / 100;
 
   return NextResponse.json({
     tickets,
     tierSummary,
     totalRevenue,
+    netRevenue,
+    stripeFees,
     totalSold,
   });
 }
