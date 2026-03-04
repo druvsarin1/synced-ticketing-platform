@@ -6,14 +6,19 @@ import { EVENT } from "@/lib/event";
 export default function Home() {
   const [loading, setLoading] = useState<string | null>(null);
   const [code, setCode] = useState("");
-  const [unlocked, setUnlocked] = useState(false);
+  const [unlockedTierIds, setUnlockedTierIds] = useState<string[]>([]);
   const [codeError, setCodeError] = useState(false);
 
   function handleUnlock(e: React.FormEvent) {
     e.preventDefault();
-    if (code.trim().toLowerCase() === EVENT.tiers[0].code) {
-      setUnlocked(true);
+    const entered = code.trim().toLowerCase();
+    const matchedTier = EVENT.tiers.find((t) => t.code === entered);
+    if (matchedTier) {
+      setUnlockedTierIds((prev) =>
+        prev.includes(matchedTier.id) ? prev : [...prev, matchedTier.id]
+      );
       setCodeError(false);
+      setCode("");
     } else {
       setCodeError(true);
       setTimeout(() => setCodeError(false), 2000);
@@ -140,11 +145,53 @@ export default function Home() {
             Place Your Bet
           </h3>
 
-          {!unlocked ? (
-            /* Code gate */
+          {/* Unlocked tiers */}
+          {unlockedTierIds.length > 0 && (
+            <div className="flex flex-col gap-5 mb-5">
+              {EVENT.tiers
+                .filter((tier) => unlockedTierIds.includes(tier.id))
+                .map((tier) => (
+                  <div
+                    key={tier.id}
+                    className="ticket-card rounded-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden"
+                  >
+                    <span className="absolute top-4 right-5 text-3xl opacity-10 text-red-500">
+                      ♠
+                    </span>
+
+                    <h4 className="text-lg sm:text-xl font-bold mb-1 text-white">
+                      {tier.name}
+                    </h4>
+                    <p className="text-zinc-500 text-sm mb-5">
+                      {tier.description}
+                    </p>
+                    <p className="text-4xl sm:text-5xl font-black mb-6 text-white">
+                      ${tier.price}
+                      <span className="text-zinc-700 text-sm font-normal ml-1.5">
+                        / ticket
+                      </span>
+                    </p>
+                    <button
+                      onClick={() =>
+                        handleCheckout(tier.id, tier.price, tier.name)
+                      }
+                      disabled={loading === tier.id}
+                      className="w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-3.5 px-6 rounded-xl transition-all cursor-pointer text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading === tier.id ? "Redirecting..." : "Buy Now"}
+                    </button>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {/* Code gate — always visible until all tiers unlocked */}
+          {unlockedTierIds.length < EVENT.tiers.length && (
             <div className="ticket-card rounded-2xl p-6 sm:p-8 text-center">
               <span className="text-red-500/30 text-4xl mb-4 block">♠</span>
-              <h4 className="text-lg font-bold mb-2">Invite Only</h4>
+              <h4 className="text-lg font-bold mb-2">
+                {unlockedTierIds.length === 0 ? "Invite Only" : "Have Another Code?"}
+              </h4>
               <p className="text-zinc-500 text-sm mb-6">
                 Enter your access code to unlock tickets
               </p>
@@ -172,42 +219,6 @@ export default function Home() {
                   Unlock
                 </button>
               </form>
-            </div>
-          ) : (
-            /* Ticket revealed with animation */
-            <div className="flex flex-col gap-5">
-              {EVENT.tiers.map((tier) => (
-                <div
-                  key={tier.id}
-                  className="ticket-card rounded-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden"
-                >
-                  <span className="absolute top-4 right-5 text-3xl opacity-10 text-red-500">
-                    ♠
-                  </span>
-
-                  <h4 className="text-lg sm:text-xl font-bold mb-1 text-white">
-                    {tier.name}
-                  </h4>
-                  <p className="text-zinc-500 text-sm mb-5">
-                    {tier.description}
-                  </p>
-                  <p className="text-4xl sm:text-5xl font-black mb-6 text-white">
-                    ${tier.price}
-                    <span className="text-zinc-700 text-sm font-normal ml-1.5">
-                      / ticket
-                    </span>
-                  </p>
-                  <button
-                    onClick={() =>
-                      handleCheckout(tier.id, tier.price, tier.name)
-                    }
-                    disabled={loading === tier.id}
-                    className="w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-3.5 px-6 rounded-xl transition-all cursor-pointer text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading === tier.id ? "Redirecting..." : "Buy Now"}
-                  </button>
-                </div>
-              ))}
             </div>
           )}
         </div>

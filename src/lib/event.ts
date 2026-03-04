@@ -11,12 +11,20 @@ export const EVENT = {
   age: "18+ with valid ID",
   tiers: [
     {
-      id: "general",
-      name: "General Admission",
+      id: "eboard",
+      name: "E-Board",
+      price: 23,
+      description: "E-Board entry to the afterparty",
+      code: "syncedxeboard",
+      capacity: 18,
+    },
+    {
+      id: "dance",
+      name: "Dance Team",
       price: 25,
-      description: "Entry to the afterparty",
+      description: "Dance team entry to the afterparty",
       code: "syncedxsholay",
-      capacity: 200,
+      capacity: 130,
     },
   ],
 } as const;
