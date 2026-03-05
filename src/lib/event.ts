@@ -16,7 +16,7 @@ export const EVENT = {
       price: 23,
       description: "E-Board entry to the afterparty",
       code: "syncedxeboard",
-      capacity: 18,
+      capacity: 17,
     },
     {
       id: "dance",
@@ -24,7 +24,7 @@ export const EVENT = {
       price: 25,
       description: "Dance team entry to the afterparty",
       code: "syncedxsholay",
-      capacity: 130,
+      capacity: 90,
     },
   ],
 } as const;
