@@ -65,9 +65,9 @@ describe("POST /api/checkout", () => {
   });
 
   it("returns 400 'Sold out' when at capacity", async () => {
-    // 90 tickets sold (dance tier capacity = 90)
+    // 100 tickets sold (dance tier capacity = 100)
     mockEq.mockResolvedValue({
-      data: [{ quantity: 90 }],
+      data: [{ quantity: 100 }],
     });
 
     const res = await POST(makeRequest(validBody));
@@ -77,9 +77,9 @@ describe("POST /api/checkout", () => {
   });
 
   it("correctly counts quantities (not just sessions)", async () => {
-    // 3 sessions with different quantities totaling 90
+    // 3 sessions with different quantities totaling 100
     mockEq.mockResolvedValue({
-      data: [{ quantity: 40 }, { quantity: 30 }, { quantity: 20 }],
+      data: [{ quantity: 40 }, { quantity: 35 }, { quantity: 25 }],
     });
 
     const res = await POST(makeRequest(validBody));

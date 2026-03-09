@@ -105,14 +105,14 @@ describe("GET /api/admin/tickets", () => {
       (t: { id: string }) => t.id === "dance"
     );
     expect(danceTier.sold).toBe(2);
-    expect(danceTier.capacity).toBe(90);
-    expect(danceTier.remaining).toBe(88);
+    expect(danceTier.capacity).toBe(100);
+    expect(danceTier.remaining).toBe(98);
 
     const eboardTier = json.tierSummary.find(
       (t: { id: string }) => t.id === "eboard"
     );
     expect(eboardTier.sold).toBe(1);
-    expect(eboardTier.capacity).toBe(17);
-    expect(eboardTier.remaining).toBe(16);
+    expect(eboardTier.capacity).toBe(14);
+    expect(eboardTier.remaining).toBe(13);
   });
 });
