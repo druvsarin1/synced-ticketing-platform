@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
 import { EVENT } from "@/lib/event";
+import { getTierCapacities } from "@/lib/capacity";
 
 export async function GET(req: NextRequest) {
   const password = req.headers.get("x-admin-password");
@@ -40,17 +41,19 @@ export async function GET(req: NextRequest) {
     date: new Date(session.created * 1000).toLocaleString("en-US", { timeZone: "America/New_York" }),
   }));
 
-  // Build per-tier summary
+  // Build per-tier summary using dynamic capacities
+  const capacities = await getTierCapacities();
   const tierSummary = EVENT.tiers.map((tier) => {
     const tierTickets = tickets.filter((t) => t.tierId === tier.id);
     const sold = tierTickets.reduce((sum, t) => sum + t.quantity, 0);
+    const capacity = capacities.get(tier.id) ?? tier.capacity;
     return {
       id: tier.id,
       name: tier.name,
       price: tier.price,
-      capacity: tier.capacity,
+      capacity,
       sold,
-      remaining: tier.capacity - sold,
+      remaining: capacity - sold,
       revenue: tierTickets.reduce((sum, t) => sum + t.amount, 0),
     };
   });

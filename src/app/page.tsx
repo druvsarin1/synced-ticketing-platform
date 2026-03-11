@@ -58,9 +58,15 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] suit-pattern overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] suit-pattern overflow-x-hidden relative">
+      {/* Casino background image */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/casino-bg.jpg')" }}
+      />
+      <div className="fixed inset-0 z-0 bg-black/75" />
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5">
+      <header className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto px-5 py-3.5 flex items-center justify-between">
           <h1 className="text-lg font-bold tracking-[2px] text-white">
             SYNCED
@@ -75,7 +81,7 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="relative min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center px-5 pt-20 pb-10 overflow-hidden">
+      <section className="relative z-10 min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center px-5 pt-20 pb-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-transparent" />
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-red-600/5 rounded-full blur-[120px]" />
 
@@ -136,14 +142,14 @@ export default function Home() {
       </section>
 
       {/* Divider */}
-      <div className="max-w-xs mx-auto flex items-center gap-4 px-5 mb-16">
+      <div className="relative z-10 max-w-xs mx-auto flex items-center gap-4 px-5 mb-16">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent to-red-900/30" />
         <span className="text-red-800/40 text-xs">♠ ♥ ♣ ♦</span>
         <div className="flex-1 h-px bg-gradient-to-l from-transparent to-red-900/30" />
       </div>
 
       {/* Tickets */}
-      <section id="tickets" className="px-5 pb-12">
+      <section id="tickets" className="relative z-10 px-5 pb-12">
         <div className="max-w-lg mx-auto">
           <h3 className="text-center text-[10px] sm:text-xs uppercase tracking-[4px] text-zinc-600 mb-8">
             Place Your Bet
@@ -229,7 +235,7 @@ export default function Home() {
       </section>
 
       {/* Event policies */}
-      <section className="px-5 py-12">
+      <section className="relative z-10 px-5 py-12">
         <div className="max-w-lg mx-auto">
           <div className="bg-white/[.02] border border-white/5 rounded-2xl p-6">
             <h4 className="text-xs uppercase tracking-[2px] text-zinc-500 font-semibold mb-4">
@@ -279,7 +285,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-6 text-center text-zinc-700 text-xs">
+      <footer className="relative z-10 border-t border-white/5 py-6 text-center text-zinc-700 text-xs">
         Powered by{" "}
         <span className="text-zinc-500 font-semibold tracking-wide">
           Synced

@@ -112,7 +112,7 @@ describe("GET /api/admin/tickets", () => {
       (t: { id: string }) => t.id === "eboard"
     );
     expect(eboardTier.sold).toBe(1);
-    expect(eboardTier.capacity).toBe(14);
-    expect(eboardTier.remaining).toBe(13);
+    expect(eboardTier.capacity).toBe(15);
+    expect(eboardTier.remaining).toBe(14);
   });
 });

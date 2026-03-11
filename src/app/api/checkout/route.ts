@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
 import { EVENT } from "@/lib/event";
 import { calculateFee } from "@/lib/fees";
+import { getTierCapacities } from "@/lib/capacity";
 
 export async function POST(req: NextRequest) {
   const { tierId, tierName, price, eventName, eventDate, eventLocation } =
@@ -18,7 +19,11 @@ export async function POST(req: NextRequest) {
 
     const sold = (tickets ?? []).reduce((sum, t) => sum + (t.quantity ?? 1), 0);
 
-    if (sold >= tier.capacity) {
+    // Use dynamic capacity from Supabase, falling back to hardcoded
+    const capacities = await getTierCapacities();
+    const capacity = capacities.get(tierId) ?? tier.capacity;
+
+    if (sold >= capacity) {
       return NextResponse.json({ error: "Sold out" }, { status: 400 });
     }
   }

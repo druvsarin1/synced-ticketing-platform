@@ -16,7 +16,7 @@ export const EVENT = {
       price: 23,
       description: "E-Board entry to the afterparty",
       code: "syncedxeboard",
-      capacity: 14,
+      capacity: 15,
     },
     {
       id: "dance",

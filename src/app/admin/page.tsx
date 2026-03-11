@@ -44,6 +44,22 @@ interface DashboardData {
 
 type Tab = "dashboard" | "checkin";
 
+async function updateCapacity(
+  password: string,
+  tierId: string,
+  capacity: number
+): Promise<boolean> {
+  const res = await fetch("/api/admin/capacity", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-password": password,
+    },
+    body: JSON.stringify({ tierId, capacity }),
+  });
+  return res.ok;
+}
+
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
@@ -457,6 +473,51 @@ export default function AdminDashboard() {
                           <p className="text-zinc-500 text-xs">
                             {tier.remaining} remaining
                           </p>
+                        </div>
+                      </div>
+                      {/* Capacity controls */}
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-xs text-zinc-500 uppercase tracking-wider">
+                          Capacity
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={async () => {
+                              const newCap = tier.capacity - 1;
+                              if (newCap < tier.sold) {
+                                alert(
+                                  `Cannot reduce below ${tier.sold} (already sold)`
+                                );
+                                return;
+                              }
+                              const ok = await updateCapacity(
+                                password,
+                                tier.id,
+                                newCap
+                              );
+                              if (ok) fetchData();
+                            }}
+                            disabled={tier.capacity <= tier.sold}
+                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold"
+                          >
+                            −
+                          </button>
+                          <span className="text-white font-mono text-sm w-10 text-center">
+                            {tier.capacity}
+                          </span>
+                          <button
+                            onClick={async () => {
+                              const ok = await updateCapacity(
+                                password,
+                                tier.id,
+                                tier.capacity + 1
+                              );
+                              if (ok) fetchData();
+                            }}
+                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors cursor-pointer flex items-center justify-center text-sm font-bold"
+                          >
+                            +
+                          </button>
                         </div>
                       </div>
                       <div className="w-full bg-white/5 rounded-full h-2.5 overflow-hidden">
