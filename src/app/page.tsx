@@ -59,12 +59,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] suit-pattern overflow-x-hidden relative">
-      {/* Casino background image */}
-      <div
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/casino-bg.jpg')" }}
-      />
-      <div className="fixed inset-0 z-0 bg-black/75" />
+      {/* Casino background image — uses absolute + min-h-full to avoid fixed positioning bugs in Instagram/WebView browsers */}
+      <div className="absolute inset-0 z-0 min-h-full">
+        <div
+          className="sticky top-0 h-screen w-full bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/casino-bg.jpg')" }}
+        />
+      </div>
+      <div className="absolute inset-0 z-0 min-h-full">
+        <div className="sticky top-0 h-screen w-full bg-black/75" />
+      </div>
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto px-5 py-3.5 flex items-center justify-between">
@@ -108,7 +112,7 @@ export default function Home() {
           <div className="inline-flex items-center gap-2 bg-red-600/10 border border-red-500/20 rounded-full px-4 py-1.5 mb-8">
             <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
             <span className="text-red-400 text-[10px] uppercase tracking-[3px] font-bold">
-              Theme: {EVENT.tagline}
+              Dress Code: {EVENT.tagline}
             </span>
           </div>
 
