@@ -59,16 +59,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] suit-pattern overflow-x-hidden relative">
-      {/* Casino background image — uses absolute + min-h-full to avoid fixed positioning bugs in Instagram/WebView browsers */}
-      <div className="absolute inset-0 z-0 min-h-full">
-        <div
-          className="sticky top-0 h-screen w-full bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/casino-bg.jpg')" }}
-        />
-      </div>
-      <div className="absolute inset-0 z-0 min-h-full">
-        <div className="sticky top-0 h-screen w-full bg-black/75" />
-      </div>
+      {/* Casino background image — no fixed/sticky to avoid Instagram/WebView glitches */}
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/casino-bg.jpg')", backgroundAttachment: "scroll" }}
+      />
+      <div className="absolute inset-0 z-0 bg-black/75" />
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto px-5 py-3.5 flex items-center justify-between">
