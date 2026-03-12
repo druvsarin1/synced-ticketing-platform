@@ -18,11 +18,28 @@ interface TicketData {
 function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const isDemo = searchParams.get("demo") === "true";
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isDemo) {
+      setTicket({
+        ticketId: "demo-0000-1111-2222-3333",
+        qrDataUrl: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect width='200' height='200' fill='white'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='16' fill='black'%3EDemo QR%3C/text%3E%3C/svg%3E",
+        buyerName: "Test User",
+        buyerEmail: "test@example.com",
+        tierName: "E-Board",
+        eventName: "SHOLAY",
+        eventDate: "Saturday, April 18, 2026",
+        eventLocation: "Infinite Lounge",
+        quantity: 1,
+      });
+      setLoading(false);
+      return;
+    }
+
     if (!sessionId) {
       setLoading(false);
       setError("No session found");
@@ -37,7 +54,7 @@ function SuccessContent() {
       .then((data) => setTicket(data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [sessionId]);
+  }, [sessionId, isDemo]);
 
   if (loading) {
     return (
