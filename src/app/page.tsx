@@ -3,11 +3,39 @@
 import { useState } from "react";
 import { EVENT } from "@/lib/event";
 
+interface Attendee {
+  name: string;
+  tier: string;
+}
+
 export default function Home() {
   const [loading, setLoading] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [unlockedTierIds, setUnlockedTierIds] = useState<string[]>([]);
   const [codeError, setCodeError] = useState(false);
+
+  const [whosGoingOpen, setWhosGoingOpen] = useState(false);
+  const [attendees, setAttendees] = useState<Attendee[] | null>(null);
+  const [attendeesLoading, setAttendeesLoading] = useState(false);
+  const [attendeesError, setAttendeesError] = useState("");
+  const [attendeeSearch, setAttendeeSearch] = useState("");
+
+  async function toggleWhosGoing() {
+    if (!whosGoingOpen && !attendees) {
+      setAttendeesLoading(true);
+      try {
+        const res = await fetch("/api/whos-going");
+        const data = await res.json();
+        if (data.error) setAttendeesError(data.error);
+        else setAttendees(data.attendees);
+      } catch {
+        setAttendeesError("Failed to load attendees.");
+      } finally {
+        setAttendeesLoading(false);
+      }
+    }
+    setWhosGoingOpen((prev) => !prev);
+  }
 
   function handleUnlock(e: React.FormEvent) {
     e.preventDefault();
@@ -229,6 +257,79 @@ export default function Home() {
                   Unlock
                 </button>
               </form>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Who's Going */}
+      <section className="relative z-10 px-5 pb-12">
+        <div className="max-w-lg mx-auto">
+          <button
+            onClick={toggleWhosGoing}
+            className="w-full flex items-center justify-between bg-white/[.02] border border-white/5 rounded-2xl px-6 py-4 cursor-pointer hover:bg-white/[.04] transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-red-500/50 text-xs">♠</span>
+              <span className="text-sm font-semibold text-white uppercase tracking-wider">
+                Who&apos;s Going
+              </span>
+              {attendees && (
+                <span className="text-xs text-zinc-600">
+                  {Math.floor(attendees.length / 10) * 10}+ people
+                </span>
+              )}
+            </div>
+            <span className={`text-zinc-500 text-xs transition-transform duration-200 ${whosGoingOpen ? "rotate-180" : ""}`}>
+              ▼
+            </span>
+          </button>
+
+          {whosGoingOpen && (
+            <div className="mt-2 bg-white/[.02] border border-white/5 rounded-2xl p-4">
+              {attendeesLoading && (
+                <div className="flex flex-col gap-2">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-10 bg-white/[.03] rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              )}
+              {attendeesError && (
+                <p className="text-red-400 text-sm text-center py-4">{attendeesError}</p>
+              )}
+              {attendees && (
+                <>
+                  <input
+                    type="text"
+                    value={attendeeSearch}
+                    onChange={(e) => setAttendeeSearch(e.target.value)}
+                    placeholder="Search names..."
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-700 focus:outline-none focus:border-red-500/40 text-sm mb-3 transition-colors"
+                  />
+                  <div className="flex flex-col gap-1.5">
+                    {attendees
+                      .filter((a) =>
+                        a.name.toLowerCase().includes(attendeeSearch.toLowerCase())
+                      )
+                      .map((attendee, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center px-3 py-2.5 rounded-xl hover:bg-white/[.03] transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-red-500/30 text-xs">♦</span>
+                            <span className="text-white text-sm">{attendee.name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    {attendees.filter((a) =>
+                      a.name.toLowerCase().includes(attendeeSearch.toLowerCase())
+                    ).length === 0 && (
+                      <p className="text-zinc-600 text-sm text-center py-4">No results</p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
