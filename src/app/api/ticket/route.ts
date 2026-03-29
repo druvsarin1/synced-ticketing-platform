@@ -52,7 +52,8 @@ export async function GET(req: NextRequest) {
       color: { dark: "#ffffff", light: "#0a0a0a" },
     });
 
-    const buyerName = session.customer_details?.name ?? "";
+    const attendeeField = session.custom_fields?.find((f) => f.key === "attendee_name");
+    const buyerName = attendeeField?.text?.value || session.customer_details?.name || "";
     const buyerEmail = session.customer_details?.email ?? "";
     const buyerPhone = session.customer_details?.phone ?? "";
     const tierName = session.metadata?.tierName ?? "";
