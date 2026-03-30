@@ -12,7 +12,7 @@ export default function Home() {
   const [loading, setLoading] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [unlockedTierIds, setUnlockedTierIds] = useState<string[]>([]);
-  const [codeError, setCodeError] = useState(false);
+  const [codeError, setCodeError] = useState("");
 
   const [whosGoingOpen, setWhosGoingOpen] = useState(false);
   const [attendees, setAttendees] = useState<Attendee[] | null>(null);
@@ -42,14 +42,19 @@ export default function Home() {
     const entered = code.trim().toLowerCase();
     const matchedTier = EVENT.tiers.find((t) => t.code === entered);
     if (matchedTier) {
+      if (matchedTier.codeExpiresAt && new Date() > new Date(matchedTier.codeExpiresAt)) {
+        setCodeError("This code has expired.");
+        setTimeout(() => setCodeError(""), 3000);
+        return;
+      }
       setUnlockedTierIds((prev) =>
         prev.includes(matchedTier.id) ? prev : [...prev, matchedTier.id]
       );
-      setCodeError(false);
+      setCodeError("");
       setCode("");
     } else {
-      setCodeError(true);
-      setTimeout(() => setCodeError(false), 2000);
+      setCodeError("Invalid code. Try again.");
+      setTimeout(() => setCodeError(""), 2000);
     }
   }
 
@@ -241,7 +246,7 @@ export default function Home() {
                 />
                 {codeError && (
                   <p className="text-red-400 text-xs">
-                    Invalid code. Try again.
+                    {codeError}
                   </p>
                 )}
                 <button

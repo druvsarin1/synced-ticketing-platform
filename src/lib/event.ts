@@ -17,6 +17,7 @@ export const EVENT = {
       description: "E-Board entry to the afterparty",
       code: "syncedxeboard",
       capacity: 15,
+      codeExpiresAt: null as string | null,
     },
     {
       id: "dance",
@@ -25,6 +26,8 @@ export const EVENT = {
       description: "Dance team entry to the afterparty",
       code: "syncedxsholay",
       capacity: 100,
+      // Set to ISO string to expire the code — null means no expiry
+      codeExpiresAt: "2026-03-30T00:00:00" as string | null,
     },
   ],
 } as const;
