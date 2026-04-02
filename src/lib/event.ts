@@ -27,7 +27,7 @@ export const EVENT = {
       code: "syncedxsholay",
       capacity: 100,
       // Set to ISO string to expire the code — null means no expiry
-      codeExpiresAt: "2026-03-30T00:00:00" as string | null,
+      codeExpiresAt: null as string | null,
     },
   ],
 } as const;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EVENT } from "@/lib/event";
 
 interface Attendee {
@@ -16,24 +16,20 @@ export default function Home() {
 
   const [whosGoingOpen, setWhosGoingOpen] = useState(false);
   const [attendees, setAttendees] = useState<Attendee[] | null>(null);
-  const [attendeesLoading, setAttendeesLoading] = useState(false);
   const [attendeesError, setAttendeesError] = useState("");
   const [attendeeSearch, setAttendeeSearch] = useState("");
 
-  async function toggleWhosGoing() {
-    if (!whosGoingOpen && !attendees) {
-      setAttendeesLoading(true);
-      try {
-        const res = await fetch("/api/whos-going");
-        const data = await res.json();
+  useEffect(() => {
+    fetch("/api/whos-going")
+      .then((r) => r.json())
+      .then((data) => {
         if (data.error) setAttendeesError(data.error);
         else setAttendees(data.attendees);
-      } catch {
-        setAttendeesError("Failed to load attendees.");
-      } finally {
-        setAttendeesLoading(false);
-      }
-    }
+      })
+      .catch(() => setAttendeesError("Failed to load attendees."));
+  }, []);
+
+  function toggleWhosGoing() {
     setWhosGoingOpen((prev) => !prev);
   }
 
@@ -286,13 +282,6 @@ export default function Home() {
 
           {whosGoingOpen && (
             <div className="mt-2 bg-black border border-white/5 rounded-2xl p-4">
-              {attendeesLoading && (
-                <div className="flex flex-col gap-2">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-10 bg-white/[.03] rounded-xl animate-pulse" />
-                  ))}
-                </div>
-              )}
               {attendeesError && (
                 <p className="text-red-400 text-sm text-center py-4">{attendeesError}</p>
               )}
