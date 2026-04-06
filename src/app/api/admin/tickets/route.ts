@@ -17,36 +17,54 @@ export async function GET(req: NextRequest) {
     expand: ["data.line_items"],
   });
 
-  // Get active ticket session IDs from Supabase to filter out cancelled ones
-  const { data: activeTickets } = await supabase
+  // Fetch all tickets from Supabase — this is the source of truth for sold counts
+  const { data: supabaseTickets } = await supabase
     .from("tickets")
-    .select("stripe_session_id");
+    .select("id, stripe_session_id, buyer_name, buyer_email, tier_id, ticket_tier, quantity");
+
   const activeSessionIds = new Set(
-    (activeTickets ?? []).map((t) => t.stripe_session_id)
+    (supabaseTickets ?? []).map((t) => t.stripe_session_id)
   );
 
-  // Only show sessions that still have a ticket in Supabase
+  // Only show Stripe sessions that still have a ticket in Supabase (not cancelled)
   const activeSessions = sessions.data.filter((session) =>
     activeSessionIds.has(session.id)
   );
 
-  const tickets = activeSessions.map((session) => ({
-    id: session.id,
-    buyerName: session.customer_details?.name ?? "—",
-    buyerEmail: session.customer_details?.email ?? "—",
-    tierName: session.metadata?.tierName ?? "—",
-    tierId: session.metadata?.tierId ?? "—",
-    quantity: session.line_items?.data[0]?.quantity ?? 1,
-    amount: (session.amount_total ?? 0) / 100,
-    date: new Date(session.created * 1000).toLocaleString("en-US", { timeZone: "America/New_York" }),
-  }));
+  // Use Supabase buyer_name (reflects the attendee custom field) and Stripe for amounts/dates
+  const tickets = activeSessions.map((session) => {
+    const sb = (supabaseTickets ?? []).find(
+      (t) => t.stripe_session_id === session.id
+    );
+    return {
+      id: session.id,
+      buyerName: sb?.buyer_name ?? session.customer_details?.name ?? "—",
+      buyerEmail: session.customer_details?.email ?? "—",
+      tierName: sb?.ticket_tier ?? session.metadata?.tierName ?? "—",
+      tierId: sb?.tier_id ?? session.metadata?.tierId ?? "—",
+      quantity: sb?.quantity ?? session.line_items?.data[0]?.quantity ?? 1,
+      amount: (session.amount_total ?? 0) / 100,
+      date: new Date(session.created * 1000).toLocaleString("en-US", { timeZone: "America/New_York" }),
+    };
+  });
 
-  // Build per-tier summary using dynamic capacities
+  // Build per-tier summary from Supabase (source of truth) not Stripe metadata
   const capacities = await getTierCapacities();
   const tierSummary = EVENT.tiers.map((tier) => {
-    const tierTickets = tickets.filter((t) => t.tierId === tier.id);
-    const sold = tierTickets.reduce((sum, t) => sum + t.quantity, 0);
+    const tierRows = (supabaseTickets ?? []).filter(
+      (t) => t.tier_id === tier.id
+    );
+    const sold = tierRows.reduce((sum, t) => sum + (t.quantity ?? 1), 0);
     const capacity = capacities.get(tier.id) ?? tier.capacity;
+    // Revenue: match to Stripe sessions for accurate amounts
+    const tierRevenue = activeSessions
+      .filter((s) => {
+        const sb = (supabaseTickets ?? []).find(
+          (t) => t.stripe_session_id === s.id
+        );
+        return sb?.tier_id === tier.id;
+      })
+      .reduce((sum, s) => sum + (s.amount_total ?? 0) / 100, 0);
     return {
       id: tier.id,
       name: tier.name,
@@ -54,15 +72,19 @@ export async function GET(req: NextRequest) {
       capacity,
       sold,
       remaining: capacity - sold,
-      revenue: tierTickets.reduce((sum, t) => sum + t.amount, 0),
+      revenue: tierRevenue,
     };
   });
 
   const totalRevenue = tickets.reduce((sum, t) => sum + t.amount, 0);
-  const totalSold = tickets.reduce((sum, t) => sum + t.quantity, 0);
+  const totalSold = (supabaseTickets ?? []).reduce(
+    (sum, t) => sum + (t.quantity ?? 1),
+    0
+  );
   // Net revenue = what you keep (tier price × qty, no Stripe fees)
   const netRevenue = tierSummary.reduce(
-    (sum, tier) => sum + tier.price * tier.sold, 0
+    (sum, tier) => sum + tier.price * tier.sold,
+    0
   );
   const stripeFees = Math.round((totalRevenue - netRevenue) * 100) / 100;
 

@@ -20,6 +20,12 @@ vi.mock("@/lib/stripe", () => ({
   },
 }));
 
+vi.mock("@/lib/capacity", () => ({
+  getTierCapacities: vi.fn().mockResolvedValue(
+    new Map([["ga", 17], ["dance", 100], ["eboard", 15]])
+  ),
+}));
+
 import { GET } from "@/app/api/admin/tickets/route";
 
 function makeRequest(password?: string) {
@@ -55,17 +61,34 @@ const stripeSessions = [
   },
 ];
 
+// Supabase tickets — source of truth. sess_cancelled is absent (was cancelled).
+const supabaseTickets = [
+  {
+    id: "ticket-1",
+    stripe_session_id: "sess_1",
+    buyer_name: "Alice",
+    buyer_email: "alice@test.com",
+    tier_id: "dance",
+    ticket_tier: "Dance Team",
+    quantity: 2,
+  },
+  {
+    id: "ticket-2",
+    stripe_session_id: "sess_2",
+    buyer_name: "Bob",
+    buyer_email: "bob@test.com",
+    tier_id: "eboard",
+    ticket_tier: "E-Board",
+    quantity: 1,
+  },
+];
+
 describe("GET /api/admin/tickets", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSessionsList.mockResolvedValue({ data: stripeSessions });
     mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockResolvedValue({
-        data: [
-          { stripe_session_id: "sess_1" },
-          { stripe_session_id: "sess_2" },
-        ],
-      }),
+      select: vi.fn().mockResolvedValue({ data: supabaseTickets }),
     });
   });
 
@@ -82,7 +105,22 @@ describe("GET /api/admin/tickets", () => {
     expect(ids).not.toContain("sess_cancelled");
   });
 
-  it("calculates net revenue = tier price × qty", async () => {
+  it("tier summary sold counts come from Supabase not Stripe metadata", async () => {
+    const res = await GET(makeRequest("testpass"));
+    const json = await res.json();
+
+    const danceTier = json.tierSummary.find((t: { id: string }) => t.id === "dance");
+    expect(danceTier.sold).toBe(2);
+    expect(danceTier.capacity).toBe(100);
+    expect(danceTier.remaining).toBe(98);
+
+    const eboardTier = json.tierSummary.find((t: { id: string }) => t.id === "eboard");
+    expect(eboardTier.sold).toBe(1);
+    expect(eboardTier.capacity).toBe(15);
+    expect(eboardTier.remaining).toBe(14);
+  });
+
+  it("calculates net revenue = tier price × qty from Supabase sold counts", async () => {
     const res = await GET(makeRequest("testpass"));
     const json = await res.json();
     // Dance: $25 × 2 = $50, EBoard: $23 × 1 = $23, total net = $73
@@ -95,24 +133,5 @@ describe("GET /api/admin/tickets", () => {
     expect(json.stripeFees).toBe(
       Math.round((json.totalRevenue - json.netRevenue) * 100) / 100
     );
-  });
-
-  it("returns correct tier summaries with capacity", async () => {
-    const res = await GET(makeRequest("testpass"));
-    const json = await res.json();
-
-    const danceTier = json.tierSummary.find(
-      (t: { id: string }) => t.id === "dance"
-    );
-    expect(danceTier.sold).toBe(2);
-    expect(danceTier.capacity).toBe(100);
-    expect(danceTier.remaining).toBe(98);
-
-    const eboardTier = json.tierSummary.find(
-      (t: { id: string }) => t.id === "eboard"
-    );
-    expect(eboardTier.sold).toBe(1);
-    expect(eboardTier.capacity).toBe(15);
-    expect(eboardTier.remaining).toBe(14);
   });
 });
