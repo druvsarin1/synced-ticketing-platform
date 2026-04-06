@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-const { mockSupabase, mockRetrieve, mockListLineItems, mockSendTicketEmail } =
+const { mockSupabase, mockRetrieve, mockListLineItems, mockSendTicketEmail, mockRefundCreate } =
   vi.hoisted(() => ({
     mockSupabase: { from: vi.fn() },
     mockRetrieve: vi.fn(),
     mockListLineItems: vi.fn(),
     mockSendTicketEmail: vi.fn(),
+    mockRefundCreate: vi.fn(),
   }));
 
 vi.mock("@/lib/supabase", () => ({ supabase: mockSupabase }));
@@ -19,11 +20,20 @@ vi.mock("@/lib/stripe", () => ({
         listLineItems: (...args: unknown[]) => mockListLineItems(...args),
       },
     },
+    refunds: {
+      create: (...args: unknown[]) => mockRefundCreate(...args),
+    },
   },
 }));
 
 vi.mock("@/lib/sendTicket", () => ({
   sendTicketEmail: (...args: unknown[]) => mockSendTicketEmail(...args),
+}));
+
+vi.mock("@/lib/capacity", () => ({
+  getTierCapacities: vi.fn().mockResolvedValue(
+    new Map([["dance", 100], ["eboard", 15], ["ga", 17]])
+  ),
 }));
 
 vi.mock("qrcode", () => ({
@@ -60,6 +70,31 @@ const mockSession = {
     eventLocation: "Infinite Lounge",
   },
 };
+
+/** Sets up the three sequential supabase.from() calls for a new-ticket flow:
+ *  1. existing ticket check → null (no existing ticket)
+ *  2. capacity check → empty list (0 sold)
+ *  3. insert → success
+ */
+function mockNewTicketFlow(mockInsert = vi.fn().mockResolvedValue({ error: null })) {
+  // 1. existing ticket check
+  mockSupabase.from.mockReturnValueOnce({
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: null }),
+      }),
+    }),
+  });
+  // 2. capacity check — 0 sold, well under limit
+  mockSupabase.from.mockReturnValueOnce({
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: [] }),
+    }),
+  });
+  // 3. insert
+  mockSupabase.from.mockReturnValueOnce({ insert: mockInsert });
+  return mockInsert;
+}
 
 describe("GET /api/ticket", () => {
   beforeEach(() => {
@@ -99,17 +134,7 @@ describe("GET /api/ticket", () => {
   });
 
   it("creates new ticket for new session", async () => {
-    mockSupabase.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null }),
-        }),
-      }),
-    });
-    mockSupabase.from.mockReturnValueOnce({
-      insert: vi.fn().mockResolvedValue({ error: null }),
-    });
-
+    mockNewTicketFlow();
     mockRetrieve.mockResolvedValue(mockSession);
     mockListLineItems.mockResolvedValue({ data: [{ quantity: 3 }] });
 
@@ -122,16 +147,7 @@ describe("GET /api/ticket", () => {
   });
 
   it("saves correct fields to Supabase (including phone, tier_id)", async () => {
-    mockSupabase.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null }),
-        }),
-      }),
-    });
-    const mockInsert = vi.fn().mockResolvedValue({ error: null });
-    mockSupabase.from.mockReturnValueOnce({ insert: mockInsert });
-
+    const mockInsert = mockNewTicketFlow();
     mockRetrieve.mockResolvedValue(mockSession);
     mockListLineItems.mockResolvedValue({ data: [{ quantity: 1 }] });
 
@@ -153,16 +169,7 @@ describe("GET /api/ticket", () => {
   });
 
   it("sends email via sendTicketEmail", async () => {
-    mockSupabase.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null }),
-        }),
-      }),
-    });
-    mockSupabase.from.mockReturnValueOnce({
-      insert: vi.fn().mockResolvedValue({ error: null }),
-    });
+    mockNewTicketFlow();
     mockRetrieve.mockResolvedValue(mockSession);
     mockListLineItems.mockResolvedValue({ data: [{ quantity: 1 }] });
 
@@ -208,5 +215,39 @@ describe("GET /api/ticket", () => {
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.error).toBe("Invalid session");
+  });
+
+  it("refunds and returns 409 when tier is at capacity at ticket creation time", async () => {
+    const { getTierCapacities } = await import("@/lib/capacity");
+    vi.mocked(getTierCapacities).mockResolvedValueOnce(new Map([["dance", 2]]));
+
+    // 1. existing ticket check → null
+    mockSupabase.from.mockReturnValueOnce({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null }),
+        }),
+      }),
+    });
+    // 2. capacity check → already 2 sold (at capacity)
+    mockSupabase.from.mockReturnValueOnce({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: [{ quantity: 2 }] }),
+      }),
+    });
+
+    mockRefundCreate.mockResolvedValue({ id: "re_test" });
+    mockRetrieve.mockResolvedValue({
+      ...mockSession,
+      payment_intent: "pi_test_123",
+    });
+    mockListLineItems.mockResolvedValue({ data: [{ quantity: 1 }] });
+
+    const res = await GET(makeRequest("sess_oversold"));
+    expect(res.status).toBe(409);
+    const json = await res.json();
+    expect(json.error).toBe("Sold out");
+    expect(json.refunded).toBe(true);
+    expect(mockRefundCreate).toHaveBeenCalledWith({ payment_intent: "pi_test_123" });
   });
 });

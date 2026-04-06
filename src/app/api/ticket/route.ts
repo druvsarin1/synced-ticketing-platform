@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
 import { sendTicketEmail } from "@/lib/sendTicket";
+import { getTierCapacities } from "@/lib/capacity";
+import { EVENT } from "@/lib/event";
 import QRCode from "qrcode";
 import { v4 as uuidv4 } from "uuid";
 
@@ -66,6 +68,36 @@ export async function GET(req: NextRequest) {
     const eventName = session.metadata?.eventName ?? "";
     const eventDate = session.metadata?.eventDate ?? "";
     const eventLocation = session.metadata?.eventLocation ?? "";
+
+    // Re-check capacity right before insert to catch race conditions.
+    // The checkout-time check is a best-effort gate; this is the hard gate.
+    const tier = EVENT.tiers.find((t) => t.id === tierId);
+    if (tier) {
+      const capacities = await getTierCapacities();
+      const capacity = capacities.get(tierId) ?? tier.capacity;
+      const { data: currentTickets } = await supabase
+        .from("tickets")
+        .select("quantity")
+        .eq("tier_id", tierId);
+      const alreadySold = (currentTickets ?? []).reduce(
+        (sum, t) => sum + (t.quantity ?? 1),
+        0
+      );
+      if (alreadySold + quantity > capacity) {
+        // Refund the payment automatically
+        const paymentIntentId =
+          typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : session.payment_intent?.id;
+        if (paymentIntentId) {
+          await stripe.refunds.create({ payment_intent: paymentIntentId });
+        }
+        return NextResponse.json(
+          { error: "Sold out", refunded: true },
+          { status: 409 }
+        );
+      }
+    }
 
     // Save to Supabase
     await supabase.from("tickets").insert({

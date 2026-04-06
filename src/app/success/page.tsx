@@ -47,9 +47,15 @@ function SuccessContent() {
     }
 
     fetch(`/api/ticket?session_id=${sessionId}`)
-      .then((res) => {
+      .then(async (res) => {
+        const data = await res.json();
+        if (res.status === 409 && data.refunded) {
+          throw new Error(
+            "This tier sold out while you were checking out. Your payment has been automatically refunded — please allow 5–10 business days."
+          );
+        }
         if (!res.ok) throw new Error("Failed to load ticket");
-        return res.json();
+        return data;
       })
       .then((data) => setTicket(data))
       .catch((err) => setError(err.message))
