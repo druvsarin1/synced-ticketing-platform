@@ -10,12 +10,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Fetch all completed checkout sessions from Stripe
-  const sessions = await stripe.checkout.sessions.list({
-    status: "complete",
-    limit: 100,
-    expand: ["data.line_items"],
-  });
+  // Fetch ALL completed checkout sessions from Stripe (paginate past the 100-item limit)
+  let startingAfter: string | undefined = undefined;
+  let hasMore = true;
+  const allSessions: Awaited<ReturnType<typeof stripe.checkout.sessions.list>>["data"] = [];
+  while (hasMore) {
+    const batch = await stripe.checkout.sessions.list({
+      status: "complete",
+      limit: 100,
+      expand: ["data.line_items"],
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    });
+    allSessions.push(...batch.data);
+    hasMore = batch.has_more;
+    if (batch.data.length > 0) startingAfter = batch.data[batch.data.length - 1].id;
+    else hasMore = false;
+  }
 
   // Fetch all tickets from Supabase — this is the source of truth for sold counts
   const { data: supabaseTickets } = await supabase
@@ -27,7 +37,7 @@ export async function GET(req: NextRequest) {
   );
 
   // Only show Stripe sessions that still have a ticket in Supabase (not cancelled)
-  const activeSessions = sessions.data.filter((session) =>
+  const activeSessions = allSessions.filter((session) =>
     activeSessionIds.has(session.id)
   );
 

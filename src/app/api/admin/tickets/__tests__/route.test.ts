@@ -86,7 +86,7 @@ const supabaseTickets = [
 describe("GET /api/admin/tickets", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSessionsList.mockResolvedValue({ data: stripeSessions });
+    mockSessionsList.mockResolvedValue({ data: stripeSessions, has_more: false });
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockResolvedValue({ data: supabaseTickets }),
     });
