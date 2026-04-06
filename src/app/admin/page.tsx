@@ -402,38 +402,12 @@ export default function AdminDashboard() {
         {tab === "dashboard" ? (
           <>
             {/* Top-level stats */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="bg-white/5 border border-white/10 rounded-xl p-5">
-                <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">
-                  Gross Revenue
-                </p>
-                <p className="text-3xl font-bold">
-                  ${data.totalRevenue.toLocaleString()}
-                </p>
-              </div>
+            <div className="grid grid-cols-1 gap-4 mb-8">
               <div className="bg-white/5 border border-white/10 rounded-xl p-5">
                 <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">
                   Tickets Sold
                 </p>
                 <p className="text-3xl font-bold">{data.totalSold}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-5">
-                <p className="text-green-500/60 text-xs uppercase tracking-wider mb-1">
-                  Net Revenue (You Keep)
-                </p>
-                <p className="text-3xl font-bold text-green-400">
-                  ${data.netRevenue.toLocaleString()}
-                </p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-5">
-                <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">
-                  Stripe Fees
-                </p>
-                <p className="text-3xl font-bold text-zinc-500">
-                  ${data.stripeFees.toLocaleString()}
-                </p>
               </div>
             </div>
 
