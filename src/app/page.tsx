@@ -178,11 +178,48 @@ export default function Home() {
             Place Your Bet
           </h3>
 
-          {/* Unlocked tiers */}
+          {/* Public tiers — always visible */}
+          <div className="flex flex-col gap-5 mb-5">
+            {EVENT.tiers
+              .filter((tier) => tier.code === null)
+              .map((tier) => (
+                <div
+                  key={tier.id}
+                  className="ticket-card rounded-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden"
+                >
+                  <span className="absolute top-4 right-5 text-3xl opacity-10 text-red-500">
+                    ♠
+                  </span>
+                  <h4 className="text-lg sm:text-xl font-bold mb-1 text-white">
+                    {tier.name}
+                  </h4>
+                  <p className="text-zinc-500 text-sm mb-5">
+                    {tier.description}
+                  </p>
+                  <p className="text-4xl sm:text-5xl font-black mb-6 text-white">
+                    ${tier.price}
+                    <span className="text-zinc-700 text-sm font-normal ml-1.5">
+                      / ticket
+                    </span>
+                  </p>
+                  <button
+                    onClick={() =>
+                      handleCheckout(tier.id, tier.price, tier.name)
+                    }
+                    disabled={loading === tier.id}
+                    className="w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-3.5 px-6 rounded-xl transition-all cursor-pointer text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading === tier.id ? "Redirecting..." : "Buy Now"}
+                  </button>
+                </div>
+              ))}
+          </div>
+
+          {/* Unlocked code-gated tiers */}
           {unlockedTierIds.length > 0 && (
             <div className="flex flex-col gap-5 mb-5">
               {EVENT.tiers
-                .filter((tier) => unlockedTierIds.includes(tier.id))
+                .filter((tier) => tier.code !== null && unlockedTierIds.includes(tier.id))
                 .map((tier) => (
                   <div
                     key={tier.id}
@@ -191,7 +228,6 @@ export default function Home() {
                     <span className="absolute top-4 right-5 text-3xl opacity-10 text-red-500">
                       ♠
                     </span>
-
                     <h4 className="text-lg sm:text-xl font-bold mb-1 text-white">
                       {tier.name}
                     </h4>
@@ -218,12 +254,12 @@ export default function Home() {
             </div>
           )}
 
-          {/* Code gate — always visible until all tiers unlocked */}
-          {unlockedTierIds.length < EVENT.tiers.length && (
+          {/* Code gate — only for gated tiers not yet unlocked */}
+          {unlockedTierIds.length < EVENT.tiers.filter((t) => t.code !== null).length && (
             <div className="ticket-card rounded-2xl p-6 sm:p-8 text-center">
               <span className="text-red-500/30 text-4xl mb-4 block">♠</span>
               <h4 className="text-lg font-bold mb-2">
-                {unlockedTierIds.length === 0 ? "Invite Only" : "Have Another Code?"}
+                {unlockedTierIds.length === 0 ? "Have an Access Code?" : "Have Another Code?"}
               </h4>
               <p className="text-zinc-500 text-sm mb-6">
                 Enter your access code to unlock tickets

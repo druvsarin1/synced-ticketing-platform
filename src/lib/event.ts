@@ -11,6 +11,15 @@ export const EVENT = {
   age: "18+ with valid ID",
   tiers: [
     {
+      id: "ga",
+      name: "General Admission",
+      price: 30,
+      description: "General admission entry to the afterparty",
+      code: null as string | null,
+      capacity: 200,
+      codeExpiresAt: null as string | null,
+    },
+    {
       id: "eboard",
       name: "E-Board",
       price: 23,
@@ -26,7 +35,6 @@ export const EVENT = {
       description: "Dance team entry to the afterparty",
       code: "syncedxsholay",
       capacity: 100,
-      // Set to ISO string to expire the code — null means no expiry
       codeExpiresAt: null as string | null,
     },
   ],

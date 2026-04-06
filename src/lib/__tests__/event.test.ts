@@ -7,8 +7,8 @@ describe("EVENT config validation", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("all tiers have unique codes", () => {
-    const codes = EVENT.tiers.map((t) => t.code);
+  it("gated tiers have unique codes", () => {
+    const codes = EVENT.tiers.map((t) => t.code).filter((c) => c !== null);
     expect(new Set(codes).size).toBe(codes.length);
   });
 
@@ -29,9 +29,40 @@ describe("EVENT config validation", () => {
       expect(tier.id).toBeTruthy();
       expect(tier.name).toBeTruthy();
       expect(tier.description).toBeTruthy();
-      expect(tier.code).toBeTruthy();
       expect(typeof tier.price).toBe("number");
       expect(typeof tier.capacity).toBe("number");
+      // code is null for public tiers, non-empty string for gated tiers
+      expect(tier.code === null || typeof tier.code === "string").toBe(true);
     }
+  });
+
+  it("gated tiers have a non-empty code", () => {
+    for (const tier of EVENT.tiers.filter((t) => t.code !== null)) {
+      expect(tier.code).toBeTruthy();
+    }
+  });
+});
+
+describe("General Admission tier", () => {
+  const ga = EVENT.tiers.find((t) => t.id === "ga");
+
+  it("exists as the first tier", () => {
+    expect(EVENT.tiers[0].id).toBe("ga");
+  });
+
+  it("is public — no code required", () => {
+    expect(ga?.code).toBeNull();
+  });
+
+  it("has a positive price", () => {
+    expect(ga?.price).toBeGreaterThan(0);
+  });
+
+  it("has a positive capacity", () => {
+    expect(ga?.capacity).toBeGreaterThan(0);
+  });
+
+  it("has no code expiry", () => {
+    expect(ga?.codeExpiresAt).toBeNull();
   });
 });
