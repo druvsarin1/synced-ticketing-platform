@@ -191,7 +191,7 @@ export default function Home() {
                     ♠
                   </span>
                   <span className="text-[10px] uppercase tracking-[3px] text-red-400/70 font-semibold mb-1 block">
-                    Tier 1
+                    Tier 1 · SBU Students Only
                   </span>
                   <h4 className="text-lg sm:text-xl font-bold mb-1 text-white">
                     {tier.name}
