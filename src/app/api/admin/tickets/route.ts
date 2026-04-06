@@ -11,20 +11,24 @@ export async function GET(req: NextRequest) {
   }
 
   // Fetch ALL completed checkout sessions from Stripe (paginate past the 100-item limit)
-  let startingAfter: string | undefined = undefined;
-  let hasMore = true;
-  const allSessions: Awaited<ReturnType<typeof stripe.checkout.sessions.list>>["data"] = [];
+  const firstBatch = await stripe.checkout.sessions.list({
+    status: "complete",
+    limit: 100,
+    expand: ["data.line_items"],
+  });
+  const allSessions = [...firstBatch.data];
+  let hasMore = firstBatch.has_more;
+  let startingAfter = allSessions.length > 0 ? allSessions[allSessions.length - 1].id : undefined;
   while (hasMore) {
     const batch = await stripe.checkout.sessions.list({
       status: "complete",
       limit: 100,
       expand: ["data.line_items"],
-      ...(startingAfter ? { starting_after: startingAfter } : {}),
+      starting_after: startingAfter,
     });
     allSessions.push(...batch.data);
     hasMore = batch.has_more;
-    if (batch.data.length > 0) startingAfter = batch.data[batch.data.length - 1].id;
-    else hasMore = false;
+    startingAfter = batch.data.length > 0 ? batch.data[batch.data.length - 1].id : undefined;
   }
 
   // Fetch all tickets from Supabase — this is the source of truth for sold counts
