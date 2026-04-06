@@ -13,10 +13,10 @@ export const EVENT = {
     {
       id: "ga",
       name: "General Admission",
-      price: 30,
+      price: 27,
       description: "General admission entry to the afterparty",
       code: null as string | null,
-      capacity: 200,
+      capacity: 17,
       codeExpiresAt: null as string | null,
     },
     {
