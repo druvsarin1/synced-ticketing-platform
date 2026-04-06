@@ -185,7 +185,7 @@ export default function Home() {
               .map((tier) => (
                 <div
                   key={tier.id}
-                  className="ticket-card rounded-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden"
+                  className="ticket-card rounded-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden opacity-60"
                 >
                   <span className="absolute top-4 right-5 text-3xl opacity-10 text-red-500">
                     ♠
@@ -193,26 +193,23 @@ export default function Home() {
                   <span className="text-[10px] uppercase tracking-[3px] text-red-400/70 font-semibold mb-1 block">
                     Tier 1 · SBU Students Only
                   </span>
-                  <h4 className="text-lg sm:text-xl font-bold mb-1 text-white">
+                  <h4 className="text-lg sm:text-xl font-bold mb-1 text-white line-through">
                     {tier.name}
                   </h4>
                   <p className="text-zinc-500 text-sm mb-5">
                     {tier.description}
                   </p>
-                  <p className="text-4xl sm:text-5xl font-black mb-6 text-white">
+                  <p className="text-4xl sm:text-5xl font-black mb-6 text-white line-through">
                     ${tier.price}
-                    <span className="text-zinc-700 text-sm font-normal ml-1.5">
+                    <span className="text-zinc-700 text-sm font-normal ml-1.5 no-underline">
                       / ticket
                     </span>
                   </p>
                   <button
-                    onClick={() =>
-                      handleCheckout(tier.id, tier.price, tier.name)
-                    }
-                    disabled={loading === tier.id}
-                    className="w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-3.5 px-6 rounded-xl transition-all cursor-pointer text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                    className="w-full bg-zinc-800 text-zinc-500 font-semibold py-3.5 px-6 rounded-xl text-sm uppercase tracking-wider cursor-not-allowed"
                   >
-                    {loading === tier.id ? "Redirecting..." : "Buy Now"}
+                    Sold Out
                   </button>
                 </div>
               ))}
