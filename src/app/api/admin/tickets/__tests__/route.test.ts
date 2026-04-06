@@ -120,22 +120,15 @@ describe("GET /api/admin/tickets", () => {
     expect(eboardTier.remaining).toBe(14);
   });
 
-  it("calculates net revenue = totalRevenue minus actual Stripe processing fees", async () => {
+  it("calculates totalRevenue and netRevenue from Supabase tier prices", async () => {
     const res = await GET(makeRequest("testpass"));
     const json = await res.json();
-    // sess_1: 5214 * 0.029 + 30 = 181.206 cents
-    // sess_2: 2407 * 0.029 + 30 = 99.803 cents
-    // stripeFees = Math.round(281.009) / 100 = $2.81
-    // totalRevenue = (5214 + 2407) / 100 = $76.21
-    // netRevenue = 76.21 - 2.81 = $73.40
-    expect(json.netRevenue).toBe(73.40);
+    // totalRevenue (Supabase): dance $25×2 + eboard $23×1 = $73
+    // stripeFees: 73 * 0.029 + 2 * 0.30 = 2.117 + 0.60 = Math.round(271.7) / 100 = $2.72
+    // netRevenue: 73 - 2.72 = $70.28
+    expect(json.totalRevenue).toBe(73);
+    expect(json.stripeFees).toBe(2.72);
+    expect(json.netRevenue).toBe(70.28);
   });
 
-  it("calculates Stripe fees = gross - net", async () => {
-    const res = await GET(makeRequest("testpass"));
-    const json = await res.json();
-    expect(json.stripeFees).toBe(
-      Math.round((json.totalRevenue - json.netRevenue) * 100) / 100
-    );
-  });
 });

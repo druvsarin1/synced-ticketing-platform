@@ -56,15 +56,8 @@ export async function GET(req: NextRequest) {
     );
     const sold = tierRows.reduce((sum, t) => sum + (t.quantity ?? 1), 0);
     const capacity = capacities.get(tier.id) ?? tier.capacity;
-    // Revenue: match to Stripe sessions for accurate amounts
-    const tierRevenue = activeSessions
-      .filter((s) => {
-        const sb = (supabaseTickets ?? []).find(
-          (t) => t.stripe_session_id === s.id
-        );
-        return sb?.tier_id === tier.id;
-      })
-      .reduce((sum, s) => sum + (s.amount_total ?? 0) / 100, 0);
+    // Revenue from Supabase: tier price × qty sold (source of truth)
+    const tierRevenue = tier.price * sold;
     return {
       id: tier.id,
       name: tier.name,
@@ -76,19 +69,22 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  const totalRevenue = tickets.reduce((sum, t) => sum + t.amount, 0);
   const totalSold = (supabaseTickets ?? []).reduce(
     (sum, t) => sum + (t.quantity ?? 1),
     0
   );
-  // Actual Stripe processing fees: 2.9% of amount_total + $0.30 per session
+  // Gross revenue from Supabase — tier price × qty (source of truth)
+  const tierPriceMap = new Map(EVENT.tiers.map((t) => [t.id, t.price]));
+  const totalRevenue = Math.round(
+    (supabaseTickets ?? []).reduce((sum, t) => {
+      const price = tierPriceMap.get(t.tier_id) ?? 0;
+      return sum + price * (t.quantity ?? 1);
+    }, 0) * 100
+  ) / 100;
+  // Stripe processing fees: 2.9% of gross + $0.30 per transaction
+  const numSessions = (supabaseTickets ?? []).length;
   const stripeFees =
-    Math.round(
-      activeSessions.reduce(
-        (sum, s) => sum + (s.amount_total ?? 0) * 0.029 + 30,
-        0
-      )
-    ) / 100;
+    Math.round((totalRevenue * 0.029 + numSessions * 0.3) * 100) / 100;
   // Net revenue = what we keep after Stripe takes their cut
   const netRevenue = Math.round((totalRevenue - stripeFees) * 100) / 100;
 
