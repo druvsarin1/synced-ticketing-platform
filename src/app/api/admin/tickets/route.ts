@@ -81,12 +81,16 @@ export async function GET(req: NextRequest) {
     (sum, t) => sum + (t.quantity ?? 1),
     0
   );
-  // Net revenue = what you keep (tier price × qty, no Stripe fees)
-  const netRevenue = tierSummary.reduce(
-    (sum, tier) => sum + tier.price * tier.sold,
-    0
-  );
-  const stripeFees = Math.round((totalRevenue - netRevenue) * 100) / 100;
+  // Actual Stripe processing fees: 2.9% of amount_total + $0.30 per session
+  const stripeFees =
+    Math.round(
+      activeSessions.reduce(
+        (sum, s) => sum + (s.amount_total ?? 0) * 0.029 + 30,
+        0
+      )
+    ) / 100;
+  // Net revenue = what we keep after Stripe takes their cut
+  const netRevenue = Math.round((totalRevenue - stripeFees) * 100) / 100;
 
   return NextResponse.json({
     tickets,
