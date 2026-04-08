@@ -30,7 +30,7 @@ export const EVENT = {
       capacity: 20,
       codeExpiresAt: null as string | null,
       label: "TIER 2",
-      soldOut: false,
+      soldOut: true,
     },
     {
       id: "eboard",
