@@ -114,3 +114,58 @@ describe("POST /api/checkout", () => {
     );
   });
 });
+
+describe("POST /api/checkout — Tier 2 capacity gate (cap: 20)", () => {
+  const tier2Body = {
+    tierId: "ga2",
+    tierName: "General Admission",
+    price: 30,
+    eventName: "SHOLAY",
+    eventDate: "Saturday, April 18, 2026",
+    eventLocation: "Infinite Lounge",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFrom.mockReturnValue({ select: mockSelect });
+    mockSelect.mockReturnValue({ eq: mockEq });
+    mockCreate.mockResolvedValue({ url: "https://checkout.stripe.com/test" });
+  });
+
+  it("allows purchase when no tickets sold yet", async () => {
+    mockEq.mockResolvedValue({ data: [] });
+    const res = await POST(makeRequest(tier2Body));
+    expect(res.status).toBe(200);
+    expect(mockCreate).toHaveBeenCalledOnce();
+  });
+
+  it("allows the 20th ticket (19 sold, 1 remaining)", async () => {
+    mockEq.mockResolvedValue({ data: [{ quantity: 19 }] });
+    const res = await POST(makeRequest(tier2Body));
+    expect(res.status).toBe(200);
+    expect(mockCreate).toHaveBeenCalledOnce();
+  });
+
+  it("blocks at exactly capacity (20 sold)", async () => {
+    mockEq.mockResolvedValue({ data: [{ quantity: 20 }] });
+    const res = await POST(makeRequest(tier2Body));
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("Sold out");
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("blocks when over capacity (21 sold)", async () => {
+    mockEq.mockResolvedValue({ data: [{ quantity: 21 }] });
+    const res = await POST(makeRequest(tier2Body));
+    expect(res.status).toBe(400);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("counts correctly across multiple sessions (e.g. 10 + 10 = sold out)", async () => {
+    mockEq.mockResolvedValue({ data: [{ quantity: 10 }, { quantity: 10 }] });
+    const res = await POST(makeRequest(tier2Body));
+    expect(res.status).toBe(400);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+});

@@ -69,48 +69,39 @@ export async function GET(req: NextRequest) {
     const eventDate = session.metadata?.eventDate ?? "";
     const eventLocation = session.metadata?.eventLocation ?? "";
 
-    // Re-check capacity right before insert to catch race conditions.
-    // The checkout-time check is a best-effort gate; this is the hard gate.
+    // Atomic capacity check + insert via DB-level advisory lock.
+    // Serializes concurrent requests per tier so overselling is impossible.
     const tier = EVENT.tiers.find((t) => t.id === tierId);
     if (tier) {
       const capacities = await getTierCapacities();
       const capacity = capacities.get(tierId) ?? tier.capacity;
-      const { data: currentTickets } = await supabase
-        .from("tickets")
-        .select("quantity")
-        .eq("tier_id", tierId);
-      const alreadySold = (currentTickets ?? []).reduce(
-        (sum, t) => sum + (t.quantity ?? 1),
-        0
-      );
-      if (alreadySold + quantity > capacity) {
-        // Refund the payment automatically
-        const paymentIntentId =
-          typeof session.payment_intent === "string"
-            ? session.payment_intent
-            : session.payment_intent?.id;
-        if (paymentIntentId) {
-          await stripe.refunds.create({ payment_intent: paymentIntentId });
-        }
-        return NextResponse.json(
-          { error: "Sold out", refunded: true },
-          { status: 409 }
-        );
+      const { data: result } = await supabase.rpc("claim_ticket", {
+        p_ticket_id: ticketId,
+        p_stripe_session_id: sessionId,
+        p_buyer_name: buyerName,
+        p_buyer_email: buyerEmail,
+        p_buyer_phone: buyerPhone,
+        p_ticket_tier: tierName,
+        p_tier_id: tierId,
+        p_quantity: quantity,
+        p_capacity: capacity,
+      });
+      if (!result?.ok) {
+        return NextResponse.json({ error: "Sold out" }, { status: 409 });
       }
+    } else {
+      await supabase.from("tickets").insert({
+        id: ticketId,
+        stripe_session_id: sessionId,
+        buyer_email: buyerEmail,
+        buyer_name: buyerName,
+        buyer_phone: buyerPhone,
+        ticket_tier: tierName,
+        tier_id: tierId,
+        quantity,
+        checked_in: false,
+      });
     }
-
-    // Save to Supabase
-    await supabase.from("tickets").insert({
-      id: ticketId,
-      stripe_session_id: sessionId,
-      buyer_email: buyerEmail,
-      buyer_name: buyerName,
-      buyer_phone: buyerPhone,
-      ticket_tier: tierName,
-      tier_id: tierId,
-      quantity,
-      checked_in: false,
-    });
 
     // Send ticket email
     const qrBase64 = qrDataUrl.split(",")[1];

@@ -18,6 +18,19 @@ export const EVENT = {
       code: null as string | null,
       capacity: 17,
       codeExpiresAt: null as string | null,
+      label: "TIER 1 · SBU STUDENTS ONLY",
+      soldOut: true,
+    },
+    {
+      id: "ga2",
+      name: "General Admission",
+      price: 30,
+      description: "General admission entry to the afterparty",
+      code: "syncedxtier2" as string | null,
+      capacity: 20,
+      codeExpiresAt: null as string | null,
+      label: "TIER 2",
+      soldOut: false,
     },
     {
       id: "eboard",
@@ -27,6 +40,8 @@ export const EVENT = {
       code: "syncedxeboard",
       capacity: 15,
       codeExpiresAt: null as string | null,
+      label: null as string | null,
+      soldOut: false,
     },
     {
       id: "dance",
@@ -36,6 +51,8 @@ export const EVENT = {
       code: "syncedxsholay",
       capacity: 100,
       codeExpiresAt: null as string | null,
+      label: null as string | null,
+      soldOut: false,
     },
   ],
 } as const;

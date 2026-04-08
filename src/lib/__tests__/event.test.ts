@@ -65,4 +65,44 @@ describe("General Admission tier", () => {
   it("has no code expiry", () => {
     expect(ga?.codeExpiresAt).toBeNull();
   });
+
+  it("is marked as sold out", () => {
+    expect(ga?.soldOut).toBe(true);
+  });
+
+  it("has a label", () => {
+    expect(ga?.label).toBeTruthy();
+  });
+});
+
+describe("General Admission Tier 2", () => {
+  const ga2 = EVENT.tiers.find((t) => t.id === "ga2");
+
+  it("exists", () => {
+    expect(ga2).toBeDefined();
+  });
+
+  it("is code-gated with syncedxtier2", () => {
+    expect(ga2?.code).toBe("syncedxtier2");
+  });
+
+  it("costs $30", () => {
+    expect(ga2?.price).toBe(30);
+  });
+
+  it("has capacity of 20", () => {
+    expect(ga2?.capacity).toBe(20);
+  });
+
+  it("is not sold out", () => {
+    expect(ga2?.soldOut).toBe(false);
+  });
+
+  it("has no code expiry", () => {
+    expect(ga2?.codeExpiresAt).toBeNull();
+  });
+
+  it("has a label", () => {
+    expect(ga2?.label).toBe("TIER 2");
+  });
 });
