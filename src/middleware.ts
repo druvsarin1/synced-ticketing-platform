@@ -7,4 +7,4 @@ export function middleware() {
   );
 }
 
-export const config = { matcher: "/(.*)" };
+export const config = { matcher: "/((?!admin|api/admin).*)" };
