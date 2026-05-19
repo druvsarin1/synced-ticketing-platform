@@ -1,0 +1,18 @@
+name: Keep Supabase alive
+
+on:
+  schedule:
+    - cron: '0 0 */6 * *'
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Insert keep-alive row
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -X POST \
+            'https://ncoipqqaxfihkfcuupei.supabase.co/rest/v1/brand_submissions' \
+            -H 'apikey: sb_publishable_zd-Medo8FDvGLvZDmUFG3g_Tt2ATrkb' \
+            -H 'Authorization: Bearer sb_publishable_zd-Medo8FDvGLvZDmUFG3g_Tt2ATrkb' \
+            -H 'Content-Type: application/json' \
+            -d '{"first_name":"test","last_name":"test","brand_name":"keep-alive","email":"keepalive@synced.vip"}'
