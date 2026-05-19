@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand Interest — The Show</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@200;300;400;500&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a96e;
+      --gold-light: #e8d5a3;
+      --cream: #f5f0e8;
+      --dark: #0a0a0a;
+      --overlay: rgba(4, 4, 4, 0.72);
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      color: var(--cream);
+      background: var(--dark);
+    }
+
+    /* ── Background ── */
+    .bg {
+      position: fixed;
+      inset: 0;
+      background-image: url('https://i1-e.pinimg.com/736x/b0/0d/15/b00d15be8e86e39defae619ce051d2f6.jpg');
+      background-size: cover;
+      background-position: center 43%;
+      filter: grayscale(100%) contrast(1.1);
+      z-index: 0;
+    }
+    .bg-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      z-index: 1;
+    }
+
+    /* ── Page layout ── */
+    .page {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px 80px;
+    }
+
+    /* ── Top nav logo ── */
+    .topbar {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 32px 20px 0;
+    }
+    .logo {
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 1.35rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      text-indent: 0.28em;
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 54px;
+    }
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      line-height: 1.12;
+      letter-spacing: 0.01em;
+      color: #ffffff;
+      text-shadow: 0 0 30px rgba(0,0,0,1), 0 2px 12px rgba(0,0,0,0.9);
+    }
+    .header h1 em {
+      font-style: italic;
+      color: var(--gold-light);
+      text-shadow: 0 0 30px rgba(0,0,0,1), 0 2px 12px rgba(0,0,0,0.9);
+    }
+    .divider {
+      width: 48px;
+      height: 1px;
+      background: var(--gold);
+      margin: 24px auto;
+      opacity: 0.7;
+    }
+    .header p {
+      font-size: 0.88rem;
+      font-weight: 300;
+      color: rgba(245, 240, 232, 0.85);
+      letter-spacing: 0.04em;
+      line-height: 1.7;
+      max-width: 440px;
+      margin: 0 auto;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.8);
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 580px;
+      background: rgba(10, 10, 10, 0.55);
+      border: 1px solid rgba(201, 169, 110, 0.18);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 2px;
+      padding: 48px 44px 52px;
+    }
+
+    /* ── Form ── */
+    .form-group {
+      margin-bottom: 28px;
+    }
+    label {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 400;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    label span {
+      color: rgba(201, 169, 110, 0.45);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: none;
+      margin-left: 6px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="url"],
+    input[type="tel"],
+    select,
+    textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(201, 169, 110, 0.22);
+      border-radius: 1px;
+      color: var(--cream);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 0.9rem;
+      padding: 13px 16px;
+      outline: none;
+      transition: border-color 0.25s ease, background 0.25s ease;
+      -webkit-appearance: none;
+    }
+    input::placeholder, textarea::placeholder {
+      color: rgba(245, 240, 232, 0.22);
+      font-weight: 200;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--gold);
+      background: rgba(201, 169, 110, 0.05);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.65;
+    }
+    select {
+      cursor: pointer;
+      color: var(--cream);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a96e' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
+    }
+    select option {
+      background: #111;
+      color: var(--cream);
+    }
+
+    /* ── Two-col row ── */
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* ── Checkbox group ── */
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 2px;
+    }
+    .checkbox-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: rgba(245, 240, 232, 0.7);
+      border: 1px solid rgba(201, 169, 110, 0.2);
+      padding: 7px 14px;
+      border-radius: 1px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .checkbox-pill input[type="checkbox"] {
+      display: none;
+    }
+    .checkbox-pill:has(input:checked),
+    .checkbox-pill.checked {
+      border-color: var(--gold);
+      color: var(--gold-light);
+      background: rgba(201, 169, 110, 0.08);
+    }
+    .checkbox-pill:hover {
+      border-color: rgba(201, 169, 110, 0.5);
+      color: var(--cream);
+    }
+
+    /* ── Submit ── */
+    .submit-wrap {
+      margin-top: 38px;
+      text-align: center;
+    }
+    .btn {
+      display: inline-block;
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: 0.7rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--dark);
+      background: var(--gold);
+      border: none;
+      padding: 16px 52px;
+      cursor: pointer;
+      border-radius: 1px;
+      transition: background 0.25s ease, transform 0.15s ease;
+    }
+    .btn:hover {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    /* ── Success state ── */
+    .success {
+      display: none;
+      text-align: center;
+      padding: 40px 0 20px;
+    }
+    .success.visible { display: block; }
+    .success-icon {
+      font-size: 2rem;
+      color: var(--gold);
+      margin-bottom: 20px;
+    }
+    .success h2 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
+      font-size: 1.6rem;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .success p {
+      font-size: 0.85rem;
+      color: rgba(245,240,232,0.55);
+      letter-spacing: 0.04em;
+      line-height: 1.7;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 48px;
+      text-align: center;
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(245, 240, 232, 0.2);
+    }
+
+    @media (max-width: 520px) {
+      .card { padding: 36px 24px 44px; }
+      .row { grid-template-columns: 1fr; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg"></div>
+  <div class="bg-overlay"></div>
+
+  <div class="topbar">
+    <span class="logo">Synced</span>
+  </div>
+
+  <main class="page">
+    <header class="header">
+      <h1>Be Part of<br /><em>Synced's Fashion Experience</em></h1>
+      <div class="divider"></div>
+      <p>We are curating an elevated fashion experience and would love to have you join us. Fill out the form below and we'll be in touch.</p>
+    </header>
+
+    <div class="card">
+
+      <!-- Success message (shown after submit) -->
+      <div class="success" id="success">
+        <div class="success-icon">✦</div>
+        <h2>Thank you.</h2>
+        <p>We've received your submission and will<br />reach out to you shortly.</p>
+      </div>
+
+      <!-- Form -->
+      <form id="interestForm" novalidate>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" name="firstName" required />
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input type="text" id="lastName" name="lastName" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="brandName">Brand Name</label>
+          <input type="text" id="brandName" name="brandName" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+
+        <div class="form-group">
+          <label for="instagram">Instagram Handle</label>
+          <input type="text" id="instagram" name="instagram" />
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="website">Website <span>optional</span></label>
+            <input type="url" id="website" name="website" />
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone <span>optional</span></label>
+            <input type="tel" id="phone" name="phone" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Brand Category</label>
+          <div class="checkbox-group" id="categoryGroup">
+            <label class="checkbox-pill">
+              <input type="checkbox" name="category" value="Womenswear" /> Womenswear
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" name="category" value="Menswear" /> Menswear
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" name="category" value="Bridal" /> Bridal
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" name="category" value="Jewelry" /> Jewelry
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" name="category" value="Accessories" /> Accessories
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" name="category" value="Fusion / Desi" /> Fusion / Desi
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="lookCount">Estimated Number of Looks <span>optional</span></label>
+          <select id="lookCount" name="lookCount">
+            <option value="" disabled selected>Select a range</option>
+            <option>1–3</option>
+            <option>4–6</option>
+            <option>7–10</option>
+            <option>10+</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="about">Tell Us About Your Brand</label>
+          <textarea id="about" name="about"></textarea>
+        </div>
+
+        <div class="submit-wrap">
+          <button type="submit" class="btn">Submit Interest</button>
+        </div>
+
+      </form>
+    </div>
+
+    <footer class="footer">
+      &copy; 2026 &nbsp;·&nbsp; All rights reserved
+    </footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    // ── Supabase config ──────────────────────────────────────────
+    const SUPABASE_URL  = 'YOUR_SUPABASE_URL';   // e.g. https://xxxx.supabase.co
+    const SUPABASE_KEY  = 'YOUR_SUPABASE_ANON_KEY';
+    // ────────────────────────────────────────────────────────────
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Checkbox pill toggle visual state (for browsers without :has() support)
+    document.querySelectorAll('.checkbox-pill input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        cb.closest('.checkbox-pill').classList.toggle('checked', cb.checked);
+      });
+    });
+
+    document.getElementById('interestForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const form = this;
+      const btn  = form.querySelector('.btn');
+
+      const categories = Array.from(
+        form.querySelectorAll('input[name="category"]:checked')
+      ).map(el => el.value);
+
+      const payload = {
+        first_name:  form.firstName.value.trim(),
+        last_name:   form.lastName.value.trim(),
+        brand_name:  form.brandName.value.trim(),
+        email:       form.email.value.trim(),
+        instagram:   form.instagram.value.trim(),
+        website:     form.website.value.trim() || null,
+        phone:       form.phone.value.trim()   || null,
+        categories,
+        look_count:  form.lookCount.value || null,
+        about:       form.about.value.trim()   || null,
+      };
+
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+
+      try {
+        const { error } = await db.from('brand_submissions').insert(payload);
+        if (error) throw error;
+
+        form.style.display = 'none';
+        document.getElementById('success').classList.add('visible');
+      } catch (err) {
+        console.error(err);
+        btn.textContent = 'Submit Interest';
+        btn.disabled = false;
+        alert('Something went wrong — please try again.');
+      }
+    });
+  </script>
+</body>
+</html>
